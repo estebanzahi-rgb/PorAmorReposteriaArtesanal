@@ -3,8 +3,8 @@ services:
     name: poramor-backend
     runtime: node
     rootDir: src/backend
-    buildCommand: npm install && npm run build && npx prisma generate && npx prisma migrate deploy
-    startCommand: node dist/main
+    buildCommand: npm install
+    startCommand: npm run build && node dist/main
     plan: free
     envVars:
       - key: NODE_ENV
