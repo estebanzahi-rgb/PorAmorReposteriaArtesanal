@@ -27,9 +27,9 @@ export async function apiFetch<T>(
 
 export async function serverFetch<T>(
   path: string,
-  options?: RequestInit & { token?: string },
+  options?: RequestInit & { token?: string; timeoutMs?: number },
 ): Promise<T> {
-  const { token, ...rest } = options ?? {};
+  const { token, timeoutMs = 8000, ...rest } = options ?? {};
   const res = await fetch(`${SERVER_API_URL}${path}`, {
     ...rest,
     headers: {
@@ -38,6 +38,7 @@ export async function serverFetch<T>(
       ...rest.headers,
     },
     cache: 'no-store',
+    signal: AbortSignal.timeout(timeoutMs),
   });
   return handleResponse<T>(res);
 }

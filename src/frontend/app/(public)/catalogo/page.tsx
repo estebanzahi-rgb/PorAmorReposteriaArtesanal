@@ -13,9 +13,23 @@ async function Products({ searchParams }: PageProps) {
   if (category) params.set('category', category);
   if (search) params.set('search', search);
 
-  const products = await serverFetch<ProductDto[]>(`/catalog?${params.toString()}`);
-
-  return <ProductGrid products={products} />;
+  try {
+    const products = await serverFetch<ProductDto[]>(`/catalog?${params.toString()}`);
+    return <ProductGrid products={products} />;
+  } catch {
+    return (
+      <div className="text-center py-20 space-y-3">
+        <p className="text-muted-foreground">No se pudieron cargar los productos.</p>
+        <p className="text-sm text-muted-foreground/70">
+          El servidor está iniciando — espera unos segundos y{' '}
+          <a href="/catalogo" className="underline hover:text-foreground transition-colors">
+            recarga la página
+          </a>
+          .
+        </p>
+      </div>
+    );
+  }
 }
 
 export default function CatalogoPage({ searchParams }: PageProps) {
