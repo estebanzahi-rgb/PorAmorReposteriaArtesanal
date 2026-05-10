@@ -1,0 +1,2 @@
+export const PAYMENT_GATEWAY = Symbol('PAYMENT_GATEWAY');
+export const PROCESS_PAYMENT_USE_CASE = Symbol('PROCESS_PAYMENT_USE_CASE');

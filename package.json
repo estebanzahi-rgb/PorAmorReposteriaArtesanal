@@ -1,0 +1,13 @@
+{
+  "name": "poramor-reposteria-artesanal",
+  "private": true,
+  "scripts": {
+    "typecheck": "npm run typecheck --prefix src/frontend & npm run typecheck --prefix src/backend",
+    "test:e2e": "npm run test:e2e --prefix src/frontend",
+    "qa": "node scripts/qa-check.js",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7"
+  }
+}

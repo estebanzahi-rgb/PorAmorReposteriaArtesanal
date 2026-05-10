@@ -1,0 +1,298 @@
+// PorAmor Repostería Artesanal — Prisma Schema
+// Arquitectura: Hexagonal / Puertos y Adaptadores
+// Base de datos: PostgreSQL 15
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────
+// AUTH
+// ─────────────────────────────────────────────
+
+model User {
+  id        String   @id @default(cuid())
+  googleId  String   @unique
+  email     String   @unique
+  name      String
+  photoUrl  String?
+  role      UserRole @default(USER)
+  createdAt DateTime @default(now())
+
+  cart   Cart?
+  orders Order[]
+
+  @@map("users")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+// ─────────────────────────────────────────────
+// CATALOG
+// ─────────────────────────────────────────────
+
+model Category {
+  id       String    @id @default(cuid())
+  name     String    @unique
+  slug     String    @unique
+  products Product[]
+
+  @@map("categories")
+}
+
+model Product {
+  id          String        @id @default(cuid())
+  name        String
+  slug        String        @unique
+  description String
+  basePrice   Decimal       @db.Decimal(10, 2)
+  categoryId  String
+  category    Category      @relation(fields: [categoryId], references: [id])
+  status      ProductStatus @default(INACTIVE)
+  images      String[]
+  isCake      Boolean       @default(false)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  variants        ProductVariant[]
+  cartItems       CartItem[]
+  orderItems      OrderItem[]
+  productDiscount ProductDiscount?
+  quantityRule    QuantityDiscountRule?
+
+  @@map("products")
+}
+
+enum ProductStatus {
+  ACTIVE
+  INACTIVE
+}
+
+model ProductVariant {
+  id            String  @id @default(cuid())
+  productId     String
+  product       Product @relation(fields: [productId], references: [id])
+  name          String
+  priceModifier Decimal @db.Decimal(10, 2) @default(0)
+  isActive      Boolean @default(true)
+
+  cartItems  CartItem[]
+  orderItems OrderItem[]
+
+  @@map("product_variants")
+}
+
+// Opciones del configurador de tortas
+// SIZE usa priceModifier como precio base
+// FLAVOR, FILLING, TOPPING, TOPPER usan priceModifier como delta sobre SIZE
+model CakeOption {
+  id            String        @id @default(cuid())
+  dimension     CakeDimension
+  name          String
+  priceModifier Decimal       @db.Decimal(10, 2) @default(0)
+  isActive      Boolean       @default(true)
+
+  @@unique([dimension, name])
+  @@map("cake_options")
+}
+
+enum CakeDimension {
+  SIZE
+  FLAVOR
+  FILLING
+  TOPPING
+  TOPPER
+}
+
+// ─────────────────────────────────────────────
+// CART
+// ─────────────────────────────────────────────
+
+model Cart {
+  id        String     @id @default(cuid())
+  userId    String?    @unique
+  user      User?      @relation(fields: [userId], references: [id])
+  items     CartItem[]
+  updatedAt DateTime   @updatedAt
+  createdAt DateTime   @default(now())
+
+  @@map("carts")
+}
+
+// cakeConfig almacena CakeConfiguration serializado como JSON
+// { sizeId, flavorId, fillingId, toppingType, toppingDescription?, message?, drawing?, topperId? }
+model CartItem {
+  id         String          @id @default(cuid())
+  cartId     String
+  cart       Cart            @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  productId  String
+  product    Product         @relation(fields: [productId], references: [id])
+  variantId  String?
+  variant    ProductVariant? @relation(fields: [variantId], references: [id])
+  cakeConfig Json?
+  quantity   Int             @default(1)
+  unitPrice  Decimal         @db.Decimal(10, 2) // congelado al momento de agregar
+  createdAt  DateTime        @default(now())
+
+  @@map("cart_items")
+}
+
+// ─────────────────────────────────────────────
+// ORDER
+// ─────────────────────────────────────────────
+
+model Order {
+  id             String        @id @default(cuid())
+  orderNumber    String        @unique // PAM-YYYY-XXXX
+  userId         String
+  user           User          @relation(fields: [userId], references: [id])
+  status         OrderStatus   @default(RECEIVED)
+  deliveryType   DeliveryType
+  customerName   String
+  customerPhone  String
+  customerEmail  String
+  deliveryStreet String?
+  deliveryCity   String?
+  deliveryNotes  String?
+  subtotal       Decimal       @db.Decimal(10, 2)
+  deliveryCost   Decimal       @db.Decimal(10, 2) @default(0)
+  discountAmount Decimal       @db.Decimal(10, 2) @default(0)
+  couponAmount   Decimal       @db.Decimal(10, 2) @default(0)
+  total          Decimal       @db.Decimal(10, 2)
+  paymentMethod  PaymentMethod
+  couponCode     String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  items   OrderItem[]
+  payment Payment?
+
+  @@map("orders")
+}
+
+enum OrderStatus {
+  RECEIVED
+  IN_PREPARATION
+  READY
+  SHIPPED     // solo válido si deliveryType = DELIVERY
+  DELIVERED
+  CANCELLED
+}
+
+enum DeliveryType {
+  PICKUP
+  DELIVERY
+}
+
+enum PaymentMethod {
+  PSE
+  CARD
+  MERCADOPAGO
+}
+
+model OrderItem {
+  id                  String          @id @default(cuid())
+  orderId             String
+  order               Order           @relation(fields: [orderId], references: [id])
+  productId           String
+  product             Product         @relation(fields: [productId], references: [id])
+  variantId           String?
+  variant             ProductVariant? @relation(fields: [variantId], references: [id])
+  cakeConfig          Json?
+  quantity            Int
+  unitPrice           Decimal         @db.Decimal(10, 2)
+  discountedUnitPrice Decimal?        @db.Decimal(10, 2)
+
+  @@map("order_items")
+}
+
+// Un único registro — se actualiza con upsert
+model DeliveryRate {
+  id        String   @id @default(cuid())
+  amount    Decimal  @db.Decimal(10, 2)
+  updatedAt DateTime @updatedAt
+  updatedBy String   // admin email
+
+  @@map("delivery_rate")
+}
+
+// ─────────────────────────────────────────────
+// PAYMENT
+// ─────────────────────────────────────────────
+
+model Payment {
+  id          String        @id @default(cuid())
+  orderId     String        @unique
+  order       Order         @relation(fields: [orderId], references: [id])
+  method      PaymentMethod
+  status      PaymentStatus @default(PENDING)
+  amount      Decimal       @db.Decimal(10, 2)
+  processedAt DateTime?
+  createdAt   DateTime      @default(now())
+
+  @@map("payments")
+}
+
+enum PaymentStatus {
+  PENDING
+  APPROVED
+  FAILED
+}
+
+// ─────────────────────────────────────────────
+// DISCOUNT
+// ─────────────────────────────────────────────
+
+// Máximo 1 descuento activo por producto
+model ProductDiscount {
+  id         String   @id @default(cuid())
+  productId  String   @unique
+  product    Product  @relation(fields: [productId], references: [id])
+  percentage Int      // 1-99
+  startsAt   DateTime
+  endsAt     DateTime
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+
+  @@map("product_discounts")
+}
+
+// Máxima 1 regla activa por producto
+model QuantityDiscountRule {
+  id          String   @id @default(cuid())
+  productId   String   @unique
+  product     Product  @relation(fields: [productId], references: [id])
+  minQuantity Int      // >= 2
+  percentage  Int      // 1-99
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  @@map("quantity_discount_rules")
+}
+
+model Coupon {
+  id         String       @id @default(cuid())
+  code       String       @unique // uppercase, normalizado
+  type       DiscountType
+  value      Decimal      @db.Decimal(10, 2)
+  usageLimit Int?         // null = ilimitado
+  usageCount Int          @default(0)
+  isActive   Boolean      @default(true)
+  createdAt  DateTime     @default(now())
+  createdBy  String       // admin email
+
+  @@map("coupons")
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED_VALUE
+}
