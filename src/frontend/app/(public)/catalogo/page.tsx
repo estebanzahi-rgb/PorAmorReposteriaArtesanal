@@ -4,13 +4,14 @@ import { serverFetch } from '@lib/api';
 import type { ProductDto } from '@types-app/index';
 
 interface PageProps {
-  searchParams: { category?: string; search?: string };
+  searchParams: Promise<{ category?: string; search?: string }>;
 }
 
 async function Products({ searchParams }: PageProps) {
+  const { category, search } = await searchParams;
   const params = new URLSearchParams();
-  if (searchParams.category) params.set('category', searchParams.category);
-  if (searchParams.search) params.set('search', searchParams.search);
+  if (category) params.set('category', category);
+  if (search) params.set('search', search);
 
   const products = await serverFetch<ProductDto[]>(`/catalog?${params.toString()}`);
 
