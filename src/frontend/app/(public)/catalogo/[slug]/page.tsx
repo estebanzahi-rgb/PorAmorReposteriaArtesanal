@@ -7,12 +7,13 @@ import type { ProductDto, CakeConfiguratorOptionsDto } from '@types-app/index';
 import type { Metadata } from 'next';
 
 interface PageProps {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { slug } = await params;
   try {
-    const product = await serverFetch<ProductDto>(`/catalog/${params.slug}`);
+    const product = await serverFetch<ProductDto>(`/catalog/${slug}`);
     return { title: product.name, description: product.description };
   } catch {
     return { title: 'Producto no encontrado' };
@@ -20,11 +21,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function ProductDetailPage({ params }: PageProps) {
+  const { slug } = await params;
   let product: ProductDto;
   let cakeOptions: CakeConfiguratorOptionsDto | null = null;
 
   try {
-    product = await serverFetch<ProductDto>(`/catalog/${params.slug}`);
+    product = await serverFetch<ProductDto>(`/catalog/${slug}`);
   } catch {
     notFound();
   }
