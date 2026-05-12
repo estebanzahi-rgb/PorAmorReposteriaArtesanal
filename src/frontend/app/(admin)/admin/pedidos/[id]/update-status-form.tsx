@@ -26,16 +26,19 @@ const STATUS_LABELS: Record<OrderStatus, string> = {
 interface Props {
   orderId: string;
   currentStatus: OrderStatus;
+  deliveryType: 'PICKUP' | 'DELIVERY';
   token: string;
 }
 
-export function UpdateStatusForm({ orderId, currentStatus, token }: Props) {
+export function UpdateStatusForm({ orderId, currentStatus, deliveryType, token }: Props) {
   const router = useRouter();
   const [selected, setSelected] = useState<OrderStatus | ''>('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
-  const nextStatuses = TRANSITIONS[currentStatus] ?? [];
+  const nextStatuses = (TRANSITIONS[currentStatus] ?? []).filter(
+    (s) => !(s === 'SHIPPED' && deliveryType === 'PICKUP'),
+  );
 
   if (nextStatuses.length === 0) return null;
 

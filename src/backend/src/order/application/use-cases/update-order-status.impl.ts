@@ -1,4 +1,4 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import {
   UpdateOrderStatusUseCase,
   UpdateOrderStatusCommand,
@@ -16,7 +16,11 @@ export class UpdateOrderStatusImpl implements UpdateOrderStatusUseCase {
   async execute(command: UpdateOrderStatusCommand): Promise<Order> {
     const order = await this.orderRepo.findById(command.orderId);
     if (!order) throw new NotFoundException(`Order ${command.orderId} not found`);
-    order.transitionTo(command.newStatus);
+    try {
+      order.transitionTo(command.newStatus);
+    } catch (err) {
+      throw new BadRequestException((err as Error).message);
+    }
     return this.orderRepo.save(order);
   }
 }

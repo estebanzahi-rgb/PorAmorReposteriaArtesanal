@@ -151,7 +151,7 @@ export default async function PedidoDetailPage({ params }: Props) {
       </div>
 
       {/* Update status */}
-      <UpdateStatusForm orderId={order.id} currentStatus={order.status} token={session!.backendToken} />
+      <UpdateStatusForm orderId={order.id} currentStatus={order.status} deliveryType={order.deliveryType} token={session!.backendToken} />
     </div>
   );
 }
