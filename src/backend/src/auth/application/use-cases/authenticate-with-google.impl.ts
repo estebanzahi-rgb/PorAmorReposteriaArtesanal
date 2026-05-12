@@ -18,31 +18,34 @@ export class AuthenticateWithGoogleImpl implements AuthenticateWithGoogleUseCase
   ) {}
 
   async execute(profile: GoogleProfile): Promise<User> {
-    let user = await this.userRepo.findByGoogleId(profile.googleId);
+    const adminEmails = this.config
+      .get<string>('ADMIN_EMAILS', '')
+      .split(',')
+      .map((e) => e.trim())
+      .filter(Boolean);
+    const expectedRole = adminEmails.includes(profile.email) ? UserRole.ADMIN : UserRole.USER;
 
+    let user = await this.userRepo.findByGoogleId(profile.googleId);
     if (!user) {
       user = await this.userRepo.findByEmail(profile.email);
     }
 
     if (!user) {
-      const adminEmails = this.config
-        .get<string>('ADMIN_EMAILS', '')
-        .split(',')
-        .map((e) => e.trim())
-        .filter(Boolean);
+      return this.userRepo.save(
+        User.create({
+          id: crypto.randomUUID(),
+          googleId: profile.googleId,
+          email: profile.email,
+          name: profile.name,
+          role: expectedRole,
+          photoUrl: profile.photoUrl,
+        }),
+      );
+    }
 
-      const role = adminEmails.includes(profile.email) ? UserRole.ADMIN : UserRole.USER;
-
-      const newUser = User.create({
-        id: crypto.randomUUID(),
-        googleId: profile.googleId,
-        email: profile.email,
-        name: profile.name,
-        role,
-        photoUrl: profile.photoUrl,
-      });
-
-      return this.userRepo.save(newUser);
+    if (user.role !== expectedRole) {
+      user.updateRole(expectedRole);
+      return this.userRepo.save(user);
     }
 
     return user;

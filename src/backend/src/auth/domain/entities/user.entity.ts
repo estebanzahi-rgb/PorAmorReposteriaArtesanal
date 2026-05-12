@@ -15,6 +15,10 @@ export class User {
     return this.role === UserRole.ADMIN;
   }
 
+  updateRole(role: UserRole): User {
+    return new User(this.id, this.googleId, this.email, this.name, role, this.photoUrl, this.createdAt);
+  }
+
   static create(props: {
     id: string;
     googleId: string;
