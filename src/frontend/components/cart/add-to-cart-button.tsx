@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import { cn } from '@lib/utils';
 import { addToAnonymousCart } from '@lib/cart-storage';
 import { apiFetch } from '@lib/api';
+import { useCart } from '@lib/cart-context';
 import type { CartDto } from '@types-app/index';
 
 interface AddToCartButtonProps {
@@ -29,6 +30,7 @@ export function AddToCartButton({
   className,
 }: AddToCartButtonProps) {
   const { data: session } = useSession();
+  const { refresh } = useCart();
   const [added, setAdded] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -44,6 +46,7 @@ export function AddToCartButton({
       } else {
         addToAnonymousCart({ productId, productName, variantId, variantName, unitPrice, quantity, imageUrl });
       }
+      refresh();
       setAdded(true);
       setTimeout(() => setAdded(false), 2000);
     } finally {

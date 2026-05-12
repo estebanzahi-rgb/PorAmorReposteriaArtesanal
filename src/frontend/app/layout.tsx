@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Inter, Playfair_Display, Lora } from 'next/font/google';
 import './globals.css';
 import { SessionProvider } from 'next-auth/react';
+import { CartProvider } from '@lib/cart-context';
 import { Navbar } from '@components/layout/navbar';
 
 const inter = Inter({
@@ -35,8 +36,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="es" className={`${inter.variable} ${playfair.variable} ${lora.variable}`}>
       <body className="font-sans">
         <SessionProvider>
-          <Navbar />
-          <main>{children}</main>
+          <CartProvider>
+            <Navbar />
+            <main>{children}</main>
+          </CartProvider>
         </SessionProvider>
       </body>
     </html>

@@ -1,27 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
-import { useSession } from 'next-auth/react';
 import { ShoppingBag } from 'lucide-react';
-import { getAnonymousCart } from '@lib/cart-storage';
-import { apiFetch } from '@lib/api';
-import type { CartDto } from '@types-app/index';
+import { useCart } from '@lib/cart-context';
 
 export function CartIcon() {
-  const { data: session } = useSession();
-  const [count, setCount] = useState(0);
-
-  useEffect(() => {
-    if (session?.backendToken) {
-      apiFetch<CartDto>('/cart', { token: session.backendToken })
-        .then((cart) => setCount(cart.items.reduce((acc, i) => acc + i.quantity, 0)))
-        .catch(() => setCount(0));
-    } else {
-      const items = getAnonymousCart();
-      setCount(items.reduce((acc, i) => acc + i.quantity, 0));
-    }
-  }, [session]);
+  const { count } = useCart();
 
   return (
     <Link href="/carrito" className="relative inline-flex items-center p-2">
