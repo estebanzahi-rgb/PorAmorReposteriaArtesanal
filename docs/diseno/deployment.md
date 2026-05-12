@@ -71,7 +71,7 @@ https://por-amor-reposteria-artesanal.vercel.app/api/auth/callback/google
 | Campo | Valor |
 |---|---|
 | **Root Directory** | `src/backend` |
-| **Build Command** | `npm install --include=dev && npm run build` |
+| **Build Command** | `npm install --include=dev && npx prisma migrate deploy && npm run build` |
 | **Start Command** | `node dist/src/main` |
 | **Node version** | 20 (recomendado) o default |
 
@@ -114,3 +114,63 @@ Antes de que el desarrollador toque código, el arquitecto debe incluir en su en
 3. **Cambios en redirect URIs o CORS** — si la feature toca auth o dominios
 
 El desarrollador no puede declarar una tarea como done sin que las variables estén documentadas aquí.
+
+---
+
+## Protocolo para migraciones manuales de Prisma
+
+Cuando el proxy corporativo bloquea `prisma migrate dev` o `prisma generate`, la migración debe escribirse a mano. Seguir esta checklist **antes de hacer commit**:
+
+### Checklist pre-escritura
+
+- [ ] Leer el `migration.sql` de la migración inicial para conocer los nombres exactos de tablas y enums (Prisma usa snake_case para tablas: `orders`, `order_items`, `product_discounts`, etc.)
+- [ ] Verificar los nombres de columnas afectadas en esa misma migración
+- [ ] Confirmar el tipo de operación: `ALTER TYPE ... ADD VALUE` no requiere `ALTER TABLE`
+
+### Checklist de escritura del SQL
+
+- [ ] Solo incluir las sentencias estrictamente necesarias (no cambiar DEFAULTs de columnas si Prisma los gestiona en código)
+- [ ] Usar los nombres exactos de tablas/enums con comillas dobles tal como aparecen en el init migration
+- [ ] Para agregar valores a un enum: `ALTER TYPE "NombreEnum" ADD VALUE 'NUEVO_VALOR';`
+- [ ] No incluir `ALTER TABLE` para cambiar defaults de status/enums — Prisma siempre pasa el valor explícitamente
+
+### Checklist post-escritura (local)
+
+- [ ] Ejecutar `tsc --noEmit` en backend para verificar tipos
+- [ ] Si la migración toca enums del Prisma client: agregar casts `as any` temporales en los repositorios afectados hasta que Render regenere el client
+- [ ] Verificar que el pre-commit hook pasa en verde
+
+### Si una migración falla en producción (Render/Neon)
+
+Cuando Prisma registra una migración como fallida, bloquea futuros deploys. Para desbloquear:
+
+**1. Marcar como rolled-back en el Build Command de Render (temporalmente):**
+```
+npm install --include=dev && npx prisma migrate resolve --rolled-back <nombre_migracion> || true && npx prisma migrate deploy && npm run build
+```
+
+**2. Una vez desplegado exitosamente, limpiar el Build Command:**
+```
+npm install --include=dev && npx prisma migrate deploy && npm run build
+```
+
+**3. Hacer commit del SQL corregido** antes de triggear el redeploy.
+
+### Referencia de nombres de tablas del proyecto
+
+| Modelo Prisma | Tabla en DB |
+|---|---|
+| `User` | `users` |
+| `Category` | `categories` |
+| `Product` | `products` |
+| `ProductVariant` | `product_variants` |
+| `CakeOption` | `cake_options` |
+| `Cart` | `carts` |
+| `CartItem` | `cart_items` |
+| `Order` | `orders` |
+| `OrderItem` | `order_items` |
+| `DeliveryRate` | `delivery_rate` |
+| `Payment` | `payments` |
+| `ProductDiscount` | `product_discounts` |
+| `QuantityDiscountRule` | `quantity_discount_rules` |
+| `Coupon` | `coupons` |
