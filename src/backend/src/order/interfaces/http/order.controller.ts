@@ -10,6 +10,11 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
+import { IsArray, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
+import { Money } from '../../../shared/domain/value-objects/money.vo';
+import { DISCOUNT_CALCULATION_SERVICE } from '../../../discount/discount.tokens';
+import { DiscountCalculationService } from '../../../discount/domain/services/discount-calculation.service';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../auth/interfaces/http/guards/jwt-auth.guard';
 import { RolesGuard } from '../../../auth/interfaces/http/guards/roles.guard';
@@ -44,7 +49,25 @@ export class OrderController {
     @Inject(UPDATE_ORDER_STATUS_USE_CASE)
     private readonly updateStatus: UpdateOrderStatusUseCase,
     @Inject(ORDER_REPOSITORY) private readonly orderRepo: OrderRepository,
+    @Inject(DISCOUNT_CALCULATION_SERVICE)
+    private readonly discountService: DiscountCalculationService,
   ) {}
+
+  @Post('discount-preview')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Previsualizar descuentos sin crear pedido' })
+  async discountPreview(@Body() dto: { items: { productId: string; quantity: number; unitPrice: number }[]; couponCode?: string }) {
+    const result = await this.discountService.calculate(
+      dto.items.map((i) => ({ productId: i.productId, quantity: i.quantity, unitPrice: Money.of(i.unitPrice) })),
+      dto.couponCode,
+    );
+    return {
+      regularDiscount: result.regularDiscount.amount,
+      couponDiscount: result.couponDiscount.amount,
+      total: result.total.amount,
+      lines: result.lines.map((l) => ({ description: l.description, amount: l.amount.amount })),
+    };
+  }
 
   @Post()
   @HttpCode(HttpStatus.CREATED)

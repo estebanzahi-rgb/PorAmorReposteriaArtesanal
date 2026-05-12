@@ -13,6 +13,8 @@ interface Props {
   basePrice: number;
   discountedPrice: number | null;
   variants: ProductVariantDto[];
+  quantityDiscountMinQty?: number;
+  quantityDiscountPercentage?: number;
 }
 
 export function ProductNonCakeSection({
@@ -22,8 +24,11 @@ export function ProductNonCakeSection({
   basePrice,
   discountedPrice,
   variants,
+  quantityDiscountMinQty,
+  quantityDiscountPercentage,
 }: Props) {
   const [selectedVariant, setSelectedVariant] = useState<ProductVariantDto | null>(null);
+  const [quantity, setQuantity] = useState(1);
 
   const effectiveBase = discountedPrice ?? basePrice;
   const finalPrice = selectedVariant ? effectiveBase + selectedVariant.priceModifier : effectiveBase;
@@ -41,6 +46,16 @@ export function ProductNonCakeSection({
         )}
       </div>
 
+      {quantityDiscountMinQty && quantityDiscountPercentage && (
+        <div className="flex items-center gap-2 text-sm bg-green-50 border border-green-200 text-green-700 rounded-xl px-4 py-2">
+          <span>🏷️</span>
+          <span>
+            Lleva <strong>{quantityDiscountMinQty}+</strong> unidades y obtén{' '}
+            <strong>{quantityDiscountPercentage}% de descuento</strong>
+          </span>
+        </div>
+      )}
+
       {variants.length > 0 && (
         <VariantSelector
           variants={variants}
@@ -50,6 +65,30 @@ export function ProductNonCakeSection({
         />
       )}
 
+      <div className="flex items-center gap-3">
+        <span className="text-sm font-medium text-muted-foreground">Cantidad</span>
+        <div className="flex items-center border border-border rounded-lg overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+            className="px-3 py-2 text-lg font-medium hover:bg-muted transition-colors"
+          >
+            −
+          </button>
+          <span className="px-4 py-2 text-sm font-semibold min-w-[2.5rem] text-center">{quantity}</span>
+          <button
+            type="button"
+            onClick={() => setQuantity((q) => q + 1)}
+            className="px-3 py-2 text-lg font-medium hover:bg-muted transition-colors"
+          >
+            +
+          </button>
+        </div>
+        {quantity > 1 && (
+          <span className="text-sm text-muted-foreground">= {formatCOP(finalPrice * quantity)}</span>
+        )}
+      </div>
+
       <AddToCartButton
         productId={productId}
         productName={productName}
@@ -57,6 +96,7 @@ export function ProductNonCakeSection({
         variantName={selectedVariant?.name}
         unitPrice={finalPrice}
         imageUrl={imageUrl}
+        quantity={quantity}
       />
     </div>
   );

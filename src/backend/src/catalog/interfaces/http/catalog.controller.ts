@@ -1,4 +1,6 @@
 import { Controller, Get, Inject, Param, Query } from '@nestjs/common';
+import { PRODUCT_REPOSITORY } from '../../catalog.tokens';
+import { ProductRepository } from '../../domain/ports/out/product.repository';
 import { ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { GetProductsUseCase } from '../../domain/ports/in/get-products.use-case';
 import { GetProductByIdUseCase } from '../../domain/ports/in/get-product-by-id.use-case';
@@ -21,7 +23,16 @@ export class CatalogController {
     private readonly getProductById: GetProductByIdUseCase,
     @Inject(GET_CAKE_CONFIGURATOR_OPTIONS_USE_CASE)
     private readonly getCakeOptions: GetCakeConfiguratorOptionsUseCase,
+    @Inject(PRODUCT_REPOSITORY)
+    private readonly productRepo: ProductRepository,
   ) {}
+
+  @Get('categories')
+  @ApiOperation({ summary: 'Listar todas las categorías' })
+  async categories() {
+    const cats = await this.productRepo.findAllCategories();
+    return cats.map((c) => ({ id: c.id, name: c.name, slug: c.slug }));
+  }
 
   @Get()
   @ApiOperation({ summary: 'Listar productos activos con filtros opcionales' })

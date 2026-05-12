@@ -8,10 +8,18 @@ import { apiFetch } from '@lib/api';
 import { getAnonymousCart } from '@lib/cart-storage';
 import type { CartDto, CartItemDto, DeliveryRateDto } from '@types-app/index';
 
+interface DiscountPreview {
+  regularDiscount: number;
+  couponDiscount: number;
+  total: number;
+  lines: { description: string; amount: number }[];
+}
+
 export default function CheckoutPage() {
   const { data: session, status } = useSession();
   const [cartItems, setCartItems] = useState<CartItemDto[]>([]);
   const [deliveryRate, setDeliveryRate] = useState(0);
+  const [discountPreview, setDiscountPreview] = useState<DiscountPreview | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -22,7 +30,22 @@ export default function CheckoutPage() {
             apiFetch<CartDto>('/cart', { token: session.backendToken }),
             apiFetch<DeliveryRateDto>('/delivery-rate'),
           ]);
-          if (cart.status === 'fulfilled') setCartItems(cart.value.items);
+          if (cart.status === 'fulfilled') {
+            setCartItems(cart.value.items);
+            if (cart.value.items.length > 0) {
+              apiFetch<DiscountPreview>('/orders/discount-preview', {
+                method: 'POST',
+                token: session.backendToken,
+                body: JSON.stringify({
+                  items: cart.value.items.map((i) => ({
+                    productId: i.productId,
+                    quantity: i.quantity,
+                    unitPrice: i.unitPrice,
+                  })),
+                }),
+              }).then(setDiscountPreview).catch(() => {});
+            }
+          }
           if (rate.status === 'fulfilled') setDeliveryRate(rate.value.amount);
         }
       } finally {
@@ -85,7 +108,7 @@ export default function CheckoutPage() {
         <h1 className="text-3xl font-bold mb-8 text-[hsl(var(--brand-brown))]">
           Finalizar pedido
         </h1>
-        <CheckoutForm cartItems={cartItems} deliveryRate={deliveryRate} />
+        <CheckoutForm cartItems={cartItems} deliveryRate={deliveryRate} discountPreview={discountPreview} />
       </div>
     </div>
   );

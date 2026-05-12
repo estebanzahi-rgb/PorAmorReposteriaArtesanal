@@ -1,15 +1,21 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { apiFetch } from '@lib/api';
+
+interface Category {
+  id: string;
+  name: string;
+}
 
 export default function NuevoProductoPage() {
   const { data: session } = useSession();
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [categories, setCategories] = useState<Category[]>([]);
 
   const [form, setForm] = useState({
     name: '',
@@ -19,6 +25,10 @@ export default function NuevoProductoPage() {
     categoryId: '',
     imageUrls: '',
   });
+
+  useEffect(() => {
+    apiFetch<Category[]>('/catalog/categories').then(setCategories).catch(() => {});
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -94,13 +104,18 @@ export default function NuevoProductoPage() {
           </div>
 
           <div className="space-y-1">
-            <label className="text-sm font-medium">ID de categoría</label>
-            <input
+            <label className="text-sm font-medium">Categoría</label>
+            <select
               required
               value={form.categoryId}
               onChange={(e) => setForm({ ...form, categoryId: e.target.value })}
               className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
-            />
+            >
+              <option value="">Seleccionar...</option>
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
           </div>
         </div>
 
@@ -110,6 +125,7 @@ export default function NuevoProductoPage() {
             rows={3}
             value={form.imageUrls}
             onChange={(e) => setForm({ ...form, imageUrls: e.target.value })}
+            placeholder="https://..."
             className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none font-mono"
           />
         </div>

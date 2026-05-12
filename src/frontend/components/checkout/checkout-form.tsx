@@ -15,12 +15,20 @@ const PAYMENT_OPTIONS: { value: PaymentMethod; label: string; icon: string }[] =
   { value: 'MERCADOPAGO', label: 'Mercado Pago', icon: '💚' },
 ];
 
+interface DiscountPreview {
+  regularDiscount: number;
+  couponDiscount: number;
+  total: number;
+  lines: { description: string; amount: number }[];
+}
+
 interface CheckoutFormProps {
   cartItems: CartItemDto[];
   deliveryRate: number;
+  discountPreview: DiscountPreview | null;
 }
 
-export function CheckoutForm({ cartItems, deliveryRate }: CheckoutFormProps) {
+export function CheckoutForm({ cartItems, deliveryRate, discountPreview }: CheckoutFormProps) {
   const router = useRouter();
   const { data: session } = useSession();
   const { refresh } = useCart();
@@ -276,6 +284,12 @@ export function CheckoutForm({ cartItems, deliveryRate }: CheckoutFormProps) {
               <span>Subtotal</span>
               <span>{formatCOP(subtotal)}</span>
             </div>
+            {discountPreview && discountPreview.regularDiscount > 0 && (
+              <div className="flex justify-between text-green-600 font-medium">
+                <span>Descuento por cantidad</span>
+                <span>-{formatCOP(discountPreview.regularDiscount)}</span>
+              </div>
+            )}
             <div className="flex justify-between text-muted-foreground">
               <span>Domicilio</span>
               <span>{deliveryType === 'DELIVERY' ? formatCOP(shipping) : 'Gratis'}</span>
@@ -284,7 +298,7 @@ export function CheckoutForm({ cartItems, deliveryRate }: CheckoutFormProps) {
 
           <div className="border-t border-border pt-3 flex justify-between font-bold text-lg">
             <span>Total estimado</span>
-            <span>{formatCOP(total)}</span>
+            <span>{formatCOP(total - (discountPreview?.regularDiscount ?? 0))}</span>
           </div>
 
           {error && (
