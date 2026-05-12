@@ -20,12 +20,14 @@ import { AddItemToCartUseCase } from '../../domain/ports/in/add-item-to-cart.use
 import { UpdateCartItemUseCase } from '../../domain/ports/in/update-cart-item.use-case';
 import { RemoveCartItemUseCase } from '../../domain/ports/in/remove-cart-item.use-case';
 import { MergeCartsUseCase } from '../../domain/ports/in/merge-carts.use-case';
+import { ClearCartUseCase } from '../../domain/ports/in/clear-cart.use-case';
 import {
   GET_CART_USE_CASE,
   ADD_ITEM_TO_CART_USE_CASE,
   UPDATE_CART_ITEM_USE_CASE,
   REMOVE_CART_ITEM_USE_CASE,
   MERGE_CARTS_USE_CASE,
+  CLEAR_CART_USE_CASE,
 } from '../../cart.tokens';
 import { AddCartItemDto } from './dtos/add-cart-item.dto';
 import { UpdateCartItemDto } from './dtos/update-cart-item.dto';
@@ -43,6 +45,7 @@ export class CartController {
     @Inject(UPDATE_CART_ITEM_USE_CASE) private readonly updateItem: UpdateCartItemUseCase,
     @Inject(REMOVE_CART_ITEM_USE_CASE) private readonly removeItem: RemoveCartItemUseCase,
     @Inject(MERGE_CARTS_USE_CASE) private readonly mergeCarts: MergeCartsUseCase,
+    @Inject(CLEAR_CART_USE_CASE) private readonly clearCart: ClearCartUseCase,
   ) {}
 
   @Get()
@@ -80,6 +83,13 @@ export class CartController {
   async remove(@CurrentUser() user: AuthenticatedUser, @Param('itemId') itemId: string) {
     const cart = await this.removeItem.execute({ userId: user.id, itemId });
     return this.toResponse(cart);
+  }
+
+  @Delete()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Vaciar carrito del usuario' })
+  async clear(@CurrentUser() user: AuthenticatedUser) {
+    await this.clearCart.execute(user.id);
   }
 
   @Post('merge')

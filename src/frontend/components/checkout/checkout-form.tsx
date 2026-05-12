@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { formatCOP } from '@lib/utils';
 import { apiFetch } from '@lib/api';
+import { clearAnonymousCart } from '@lib/cart-storage';
+import { useCart } from '@lib/cart-context';
 import type { CartItemDto, OrderDto, PlaceOrderRequest, DeliveryType, PaymentMethod } from '@types-app/index';
 
 const PAYMENT_OPTIONS: { value: PaymentMethod; label: string; icon: string }[] = [
@@ -21,6 +23,7 @@ interface CheckoutFormProps {
 export function CheckoutForm({ cartItems, deliveryRate }: CheckoutFormProps) {
   const router = useRouter();
   const { data: session } = useSession();
+  const { refresh } = useCart();
 
   const [deliveryType, setDeliveryType] = useState<DeliveryType>('PICKUP');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('PSE');
@@ -88,6 +91,9 @@ export function CheckoutForm({ cartItems, deliveryRate }: CheckoutFormProps) {
         token: session.backendToken,
         body: JSON.stringify(payload),
       });
+      await apiFetch('/cart', { method: 'DELETE', token: session.backendToken }).catch(() => {});
+      clearAnonymousCart();
+      refresh();
       router.push(`/checkout/confirmacion/${order.id}`);
     } catch (err) {
       setError((err as Error).message ?? 'Error al procesar el pedido');

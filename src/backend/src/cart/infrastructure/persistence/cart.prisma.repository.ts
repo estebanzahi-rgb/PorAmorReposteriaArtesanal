@@ -72,6 +72,10 @@ export class CartPrismaRepository implements CartRepository {
     await this.prisma.cart.delete({ where: { id: cartId } });
   }
 
+  async clearByUserId(userId: string): Promise<void> {
+    await this.prisma.cart.deleteMany({ where: { userId } });
+  }
+
   private toDomain(record: {
     id: string;
     userId: string | null;

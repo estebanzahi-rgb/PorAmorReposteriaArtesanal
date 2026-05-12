@@ -5,4 +5,5 @@ export interface CartRepository {
   findByUserId(userId: string): Promise<Cart | null>;
   save(cart: Cart): Promise<Cart>;
   deleteById(cartId: string): Promise<void>;
+  clearByUserId(userId: string): Promise<void>;
 }

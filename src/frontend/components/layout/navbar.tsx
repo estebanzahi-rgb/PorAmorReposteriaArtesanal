@@ -42,6 +42,14 @@ export function Navbar() {
               Mis pedidos
             </Link>
           )}
+          {(session?.user as { role?: string })?.role === 'ADMIN' && (
+            <Link
+              href="/admin"
+              className="text-brand-teal font-semibold hover:text-brand-teal-dark transition-colors"
+            >
+              Panel Admin
+            </Link>
+          )}
         </nav>
 
         {/* Right side */}
