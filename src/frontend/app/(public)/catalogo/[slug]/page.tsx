@@ -93,6 +93,8 @@ export default async function ProductDetailPage({ params }: PageProps) {
                   basePrice={product.basePrice}
                   discountedPrice={discountedPrice}
                   variants={product.variants}
+                  quantityDiscountMinQty={product.quantityDiscount?.minQuantity}
+                  quantityDiscountPercentage={product.quantityDiscount?.percentage}
                 />
               )
             )}

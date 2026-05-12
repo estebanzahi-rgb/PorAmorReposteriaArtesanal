@@ -154,7 +154,7 @@ model Order {
   orderNumber    String        @unique // PAM-YYYY-XXXX
   userId         String
   user           User          @relation(fields: [userId], references: [id])
-  status         OrderStatus   @default(RECEIVED)
+  status         OrderStatus   @default(PENDING_PAYMENT)
   deliveryType   DeliveryType
   customerName   String
   customerPhone  String
@@ -179,6 +179,7 @@ model Order {
 }
 
 enum OrderStatus {
+  PENDING_PAYMENT
   RECEIVED
   IN_PREPARATION
   READY
@@ -193,6 +194,7 @@ enum DeliveryType {
 }
 
 enum PaymentMethod {
+  BANK_TRANSFER
   PSE
   CARD
   MERCADOPAGO

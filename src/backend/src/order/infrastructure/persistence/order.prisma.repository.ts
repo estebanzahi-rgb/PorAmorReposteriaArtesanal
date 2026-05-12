@@ -34,7 +34,8 @@ export class OrderPrismaRepository implements OrderRepository {
     const data = {
       orderNumber: order.orderNumber,
       userId: order.userId,
-      status: order.status,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      status: order.status as any,
       deliveryType: order.deliveryType,
       customerName: order.customerName,
       customerPhone: order.customerPhone,
@@ -47,7 +48,8 @@ export class OrderPrismaRepository implements OrderRepository {
       discountAmount: order.discountAmount.amount,
       couponAmount: order.couponAmount.amount,
       total: order.total.amount,
-      paymentMethod: order.paymentMethod,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      paymentMethod: order.paymentMethod as any,
       couponCode: order.couponCode ?? null,
     };
 
@@ -70,11 +72,12 @@ export class OrderPrismaRepository implements OrderRepository {
           },
         },
       },
-      update: { status: order.status },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      update: { status: order.status as any },
       include: INCLUDE,
     });
 
-    return this.toDomain(saved);
+    return this.toDomain(saved as any);
   }
 
   async findById(id: string): Promise<Order | null> {
@@ -96,7 +99,8 @@ export class OrderPrismaRepository implements OrderRepository {
   async findAll(filter?: OrderFilter): Promise<Order[]> {
     const where: Prisma.OrderWhereInput = {};
     if (filter?.userId) where.userId = filter.userId;
-    if (filter?.status) where.status = filter.status;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (filter?.status) where.status = filter.status as any;
     if (filter?.deliveryType) where.deliveryType = filter.deliveryType;
     if (filter?.dateFrom || filter?.dateTo) {
       where.createdAt = {

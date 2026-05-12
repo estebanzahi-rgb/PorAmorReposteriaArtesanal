@@ -43,7 +43,7 @@ export class PlaceOrderDto {
 
   @IsString() @IsOptional() deliveryNotes?: string;
 
-  @IsEnum(['PSE', 'CARD', 'MERCADOPAGO']) paymentMethod: 'PSE' | 'CARD' | 'MERCADOPAGO';
+  @IsEnum(['BANK_TRANSFER', 'PSE', 'CARD', 'MERCADOPAGO']) paymentMethod: 'BANK_TRANSFER' | 'PSE' | 'CARD' | 'MERCADOPAGO';
 
   @IsString() @IsOptional() couponCode?: string;
 

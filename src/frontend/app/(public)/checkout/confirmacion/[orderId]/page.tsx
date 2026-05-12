@@ -6,6 +6,7 @@ import { formatCOP } from '@lib/utils';
 import type { OrderDto } from '@types-app/index';
 
 const STATUS_LABELS: Record<string, string> = {
+  PENDING_PAYMENT: 'Pendiente de pago',
   RECEIVED: 'Recibido',
   IN_PREPARATION: 'En preparación',
   READY: 'Listo para entrega',
@@ -20,6 +21,7 @@ const DELIVERY_LABELS: Record<string, string> = {
 };
 
 const PAYMENT_LABELS: Record<string, string> = {
+  BANK_TRANSFER: 'Transferencia bancaria',
   PSE: 'PSE',
   CARD: 'Tarjeta crédito/débito',
   MERCADOPAGO: 'Mercado Pago',
@@ -45,7 +47,7 @@ export default async function OrderConfirmationPage({ params }: PageProps) {
 
   const ownerWhatsapp = process.env.NEXT_PUBLIC_OWNER_WHATSAPP ?? '';
   const waText = encodeURIComponent(
-    `Hola! Realicé el pedido ${order.orderNumber} en PorAmor Repostería. Quedo pendiente de confirmación.`,
+    `Hola! Te comparto el comprobante del pedido ${order.orderNumber} en PorAmor Repostería. Total: $${order.total.toLocaleString('es-CO')}. Quedo pendiente de confirmación.`,
   );
   const whatsappLink = `https://wa.me/${ownerWhatsapp}?text=${waText}`;
 
@@ -144,6 +146,44 @@ export default async function OrderConfirmationPage({ params }: PageProps) {
           </div>
         </div>
 
+        {/* Bank transfer instructions */}
+        {order.paymentMethod === 'BANK_TRANSFER' && order.status === 'PENDING_PAYMENT' && (
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6 space-y-3 mb-6">
+            <div className="flex items-center gap-2">
+              <span className="text-2xl">🏦</span>
+              <h2 className="font-bold text-amber-900">Realiza tu pago</h2>
+            </div>
+            <p className="text-sm text-amber-800">
+              Tu pedido quedará confirmado una vez recibamos el comprobante de pago.
+            </p>
+            <div className="bg-white border border-amber-200 rounded-xl p-4 space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Banco</span>
+                <span className="font-semibold">Bancolombia</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Tipo de cuenta</span>
+                <span className="font-semibold">Ahorros</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Número de cuenta</span>
+                <span className="font-semibold font-mono">123-456-777</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Llave de transferencia</span>
+                <span className="font-semibold font-mono">1036626558</span>
+              </div>
+              <div className="flex justify-between border-t border-amber-100 pt-2 mt-2">
+                <span className="text-muted-foreground">Valor a transferir</span>
+                <span className="font-bold text-base text-amber-900">{formatCOP(order.total)}</span>
+              </div>
+            </div>
+            <p className="text-xs text-amber-700">
+              En el concepto de la transferencia escribe tu número de pedido: <strong>{order.orderNumber}</strong>
+            </p>
+          </div>
+        )}
+
         {/* Actions */}
         <div className="flex flex-col sm:flex-row gap-3">
           {ownerWhatsapp && (
@@ -153,7 +193,8 @@ export default async function OrderConfirmationPage({ params }: PageProps) {
               rel="noopener noreferrer"
               className="flex-1 flex items-center justify-center gap-2 py-3 bg-[#25D366] text-white rounded-xl font-semibold hover:opacity-90 transition-opacity"
             >
-              <span>💬</span> Contactar por WhatsApp
+              <span>💬</span>
+              {order.status === 'PENDING_PAYMENT' ? 'Enviar comprobante' : 'Contactar por WhatsApp'}
             </a>
           )}
           <Link

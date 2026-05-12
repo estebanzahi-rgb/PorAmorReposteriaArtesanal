@@ -1,8 +1,9 @@
 export type UserRole = 'USER' | 'ADMIN';
 export type ProductStatus = 'ACTIVE' | 'INACTIVE';
 export type DeliveryType = 'PICKUP' | 'DELIVERY';
-export type PaymentMethod = 'PSE' | 'CARD' | 'MERCADOPAGO';
+export type PaymentMethod = 'BANK_TRANSFER' | 'PSE' | 'CARD' | 'MERCADOPAGO';
 export type OrderStatus =
+  | 'PENDING_PAYMENT'
   | 'RECEIVED'
   | 'IN_PREPARATION'
   | 'READY'
@@ -52,6 +53,7 @@ export interface ProductDto {
   category: CategoryDto;
   variants: ProductVariantDto[];
   activeDiscountPercentage: number | null;
+  quantityDiscount: { minQuantity: number; percentage: number } | null;
 }
 
 export interface CartItemDto {

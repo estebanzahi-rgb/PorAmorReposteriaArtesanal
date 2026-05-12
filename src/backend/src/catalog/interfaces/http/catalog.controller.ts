@@ -10,6 +10,8 @@ import {
   GET_PRODUCT_BY_ID_USE_CASE,
   GET_CAKE_CONFIGURATOR_OPTIONS_USE_CASE,
 } from '../../catalog.tokens';
+import { DISCOUNT_DATA_REPOSITORY } from '../../../discount/discount.tokens';
+import { DiscountDataRepository, QuantityRuleData } from '../../../discount/domain/ports/out/discount-data.repository';
 import { Product } from '../../domain/entities/product.entity';
 import { CakeOption } from '../../domain/entities/cake-option.entity';
 
@@ -25,6 +27,8 @@ export class CatalogController {
     private readonly getCakeOptions: GetCakeConfiguratorOptionsUseCase,
     @Inject(PRODUCT_REPOSITORY)
     private readonly productRepo: ProductRepository,
+    @Inject(DISCOUNT_DATA_REPOSITORY)
+    private readonly discountRepo: DiscountDataRepository,
   ) {}
 
   @Get('categories')
@@ -40,7 +44,9 @@ export class CatalogController {
   @ApiQuery({ name: 'search', required: false })
   async findAll(@Query('category') category?: string, @Query('search') search?: string) {
     const products = await this.getProducts.execute({ category, search });
-    return products.map(this.toResponse);
+    const rules = await this.discountRepo.findActiveQuantityRules(products.map((p) => p.id));
+    const rulesMap = new Map(rules.map((r) => [r.productId, r]));
+    return products.map((p) => this.toResponse(p, rulesMap.get(p.id)));
   }
 
   @Get('cake-configurator')
@@ -67,10 +73,11 @@ export class CatalogController {
   @ApiOperation({ summary: 'Obtener producto por slug o ID' })
   async findOne(@Param('slug') slug: string) {
     const product = await this.getProductById.execute(slug);
-    return this.toResponse(product);
+    const rules = await this.discountRepo.findActiveQuantityRules([product.id]);
+    return this.toResponse(product, rules[0]);
   }
 
-  private toResponse(p: Product) {
+  private toResponse(p: Product, quantityRule?: QuantityRuleData) {
     return {
       id: p.id,
       name: p.name,
@@ -90,6 +97,9 @@ export class CatalogController {
         isActive: v.isActive,
       })),
       activeDiscountPercentage: p.activeDiscountPercentage ?? null,
+      quantityDiscount: quantityRule
+        ? { minQuantity: quantityRule.minQuantity, percentage: quantityRule.percentage }
+        : null,
     };
   }
 }

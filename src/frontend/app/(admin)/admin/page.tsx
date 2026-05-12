@@ -31,6 +31,7 @@ export default async function AdminDashboard() {
   const recentOrders = orders.slice(0, 5);
 
   const STATUS_LABELS: Record<string, string> = {
+    PENDING_PAYMENT: 'Pendiente de pago',
     RECEIVED: 'Recibido',
     IN_PREPARATION: 'En preparación',
     READY: 'Listo',
@@ -40,6 +41,7 @@ export default async function AdminDashboard() {
   };
 
   const STATUS_COLORS: Record<string, string> = {
+    PENDING_PAYMENT: 'bg-amber-100 text-amber-700',
     RECEIVED: 'bg-blue-100 text-blue-700',
     IN_PREPARATION: 'bg-yellow-100 text-yellow-700',
     READY: 'bg-purple-100 text-purple-700',

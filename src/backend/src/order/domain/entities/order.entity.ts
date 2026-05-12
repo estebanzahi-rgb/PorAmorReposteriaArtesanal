@@ -4,6 +4,7 @@ import { DomainEvent } from '../../../shared/domain/events/domain-event';
 import { OrderItem } from './order-item.entity';
 
 export type OrderStatus =
+  | 'PENDING_PAYMENT'
   | 'RECEIVED'
   | 'IN_PREPARATION'
   | 'READY'
@@ -12,9 +13,10 @@ export type OrderStatus =
   | 'CANCELLED';
 
 export type DeliveryType = 'PICKUP' | 'DELIVERY';
-export type PaymentMethod = 'PSE' | 'CARD' | 'MERCADOPAGO';
+export type PaymentMethod = 'BANK_TRANSFER' | 'PSE' | 'CARD' | 'MERCADOPAGO';
 
 const VALID_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
+  PENDING_PAYMENT: ['RECEIVED', 'CANCELLED'],
   RECEIVED: ['IN_PREPARATION', 'CANCELLED'],
   IN_PREPARATION: ['READY', 'CANCELLED'],
   READY: ['SHIPPED', 'DELIVERED', 'CANCELLED'],
@@ -80,7 +82,7 @@ export class Order {
       params.id,
       params.orderNumber,
       params.userId,
-      'RECEIVED',
+      'PENDING_PAYMENT',
       params.deliveryType,
       params.customerName,
       params.customerPhone,

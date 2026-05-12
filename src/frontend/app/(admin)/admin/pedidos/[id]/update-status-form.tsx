@@ -6,6 +6,7 @@ import { apiFetch } from '@lib/api';
 import type { OrderStatus } from '@types-app/index';
 
 const TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
+  PENDING_PAYMENT: ['RECEIVED', 'CANCELLED'],
   RECEIVED: ['IN_PREPARATION', 'CANCELLED'],
   IN_PREPARATION: ['READY', 'CANCELLED'],
   READY: ['SHIPPED', 'DELIVERED', 'CANCELLED'],
@@ -15,6 +16,7 @@ const TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
 };
 
 const STATUS_LABELS: Record<OrderStatus, string> = {
+  PENDING_PAYMENT: 'Pendiente de pago',
   RECEIVED: 'Recibido',
   IN_PREPARATION: 'En preparación',
   READY: 'Listo',

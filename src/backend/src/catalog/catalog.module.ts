@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { DiscountModule } from '../discount/discount.module';
 import { CatalogController } from './interfaces/http/catalog.controller';
 import { AdminCatalogController } from './interfaces/http/admin-catalog.controller';
 import { GetProductsImpl } from './application/use-cases/get-products.impl';
@@ -25,6 +26,7 @@ import {
 } from './catalog.tokens';
 
 @Module({
+  imports: [DiscountModule],
   controllers: [CatalogController, AdminCatalogController],
   providers: [
     { provide: PRODUCT_REPOSITORY, useClass: ProductPrismaRepository },

@@ -9,11 +9,12 @@ import { clearAnonymousCart } from '@lib/cart-storage';
 import { useCart } from '@lib/cart-context';
 import type { CartItemDto, OrderDto, PlaceOrderRequest, DeliveryType, PaymentMethod } from '@types-app/index';
 
-const PAYMENT_OPTIONS: { value: PaymentMethod; label: string; icon: string }[] = [
-  { value: 'PSE', label: 'PSE', icon: '🏦' },
-  { value: 'CARD', label: 'Tarjeta crédito/débito', icon: '💳' },
-  { value: 'MERCADOPAGO', label: 'Mercado Pago', icon: '💚' },
-];
+// Métodos de pago para integración futura:
+// const FUTURE_PAYMENT_OPTIONS: { value: PaymentMethod; label: string; icon: string }[] = [
+//   { value: 'PSE', label: 'PSE', icon: '🏦' },
+//   { value: 'CARD', label: 'Tarjeta crédito/débito', icon: '💳' },
+//   { value: 'MERCADOPAGO', label: 'Mercado Pago', icon: '💚' },
+// ];
 
 interface DiscountPreview {
   regularDiscount: number;
@@ -34,7 +35,7 @@ export function CheckoutForm({ cartItems, deliveryRate, discountPreview }: Check
   const { refresh } = useCart();
 
   const [deliveryType, setDeliveryType] = useState<DeliveryType>('PICKUP');
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('PSE');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('BANK_TRANSFER');
   const [couponCode, setCouponCode] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -219,28 +220,16 @@ export function CheckoutForm({ cartItems, deliveryRate, discountPreview }: Check
         {/* Payment method */}
         <section className="bg-card border border-border rounded-2xl p-6 space-y-4">
           <h2 className="text-lg font-semibold">Método de pago</h2>
-          <div className="space-y-2">
-            {PAYMENT_OPTIONS.map((opt) => (
-              <label
-                key={opt.value}
-                className={`flex items-center gap-3 p-3 border-2 rounded-xl cursor-pointer transition-colors ${
-                  paymentMethod === opt.value
-                    ? 'border-primary bg-primary/5'
-                    : 'border-border hover:border-primary/40'
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="paymentMethod"
-                  value={opt.value}
-                  checked={paymentMethod === opt.value}
-                  onChange={() => setPaymentMethod(opt.value)}
-                  className="accent-primary"
-                />
-                <span className="text-xl">{opt.icon}</span>
-                <span className="font-medium text-sm">{opt.label}</span>
-              </label>
-            ))}
+          <div className="flex items-start gap-3 p-4 border-2 border-primary bg-primary/5 rounded-xl">
+            <span className="text-2xl">🏦</span>
+            <div className="space-y-1">
+              <p className="font-semibold text-sm">Transferencia bancaria — Bancolombia</p>
+              <p className="text-sm text-muted-foreground">Cuenta de ahorros: <strong>123-456-777</strong></p>
+              <p className="text-sm text-muted-foreground">Llave de transferencia: <strong>1036626558</strong></p>
+              <p className="text-xs text-muted-foreground mt-2">
+                Después de confirmar tu pedido, envía el comprobante por WhatsApp para agilizar el proceso.
+              </p>
+            </div>
           </div>
         </section>
 
