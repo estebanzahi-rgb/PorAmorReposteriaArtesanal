@@ -10,7 +10,7 @@ export class ResendEmailAdapter implements EmailPort {
 
   constructor(private readonly configService: ConfigService) {
     this.apiKey = this.configService.get<string>('RESEND_API_KEY', '');
-    this.fromEmail = this.configService.get<string>('OWNER_EMAIL', 'noreply@example.com');
+    this.fromEmail = this.configService.get<string>('RESEND_FROM_EMAIL', 'onboarding@resend.dev');
   }
 
   async send(notification: EmailNotification): Promise<void> {
