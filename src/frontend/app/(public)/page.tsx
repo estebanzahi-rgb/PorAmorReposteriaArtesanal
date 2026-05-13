@@ -1,5 +1,20 @@
 import Link from 'next/link';
 import Image from 'next/image';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'PorAmor Repostería Artesanal — Tortas y postres artesanales en Colombia',
+  description:
+    'Tortas personalizadas, postres artesanales y repostería a domicilio. Pedidos con entrega a domicilio y recogida en tienda.',
+  openGraph: {
+    title: 'PorAmor Repostería Artesanal',
+    description: 'Tortas personalizadas y postres artesanales',
+    url: process.env.NEXT_PUBLIC_SITE_URL,
+    siteName: 'PorAmor Repostería Artesanal',
+    locale: 'es_CO',
+    type: 'website',
+  },
+};
 
 export default function HomePage() {
   return (

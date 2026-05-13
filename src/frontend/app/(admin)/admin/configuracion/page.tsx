@@ -2,11 +2,15 @@ import { auth } from '@lib/auth';
 import { serverFetch } from '@lib/api';
 import { formatCOP } from '@lib/utils';
 import { DeliveryRateForm } from './delivery-rate-form';
+import { StoreSettingsManager } from './store-settings-manager';
 
 export default async function ConfiguracionPage() {
   const session = await auth();
 
   const rate = await serverFetch<{ amount: number }>('/delivery-rate').catch(() => ({ amount: 0 }));
+  const storeSettings = await serverFetch<{ leadTimeHours: number; updatedAt: string; updatedBy: string }>(
+    '/admin/store-settings',
+  ).catch(() => ({ leadTimeHours: 24, updatedAt: new Date().toISOString(), updatedBy: 'system' }));
 
   return (
     <div className="max-w-lg space-y-6">
@@ -22,6 +26,8 @@ export default async function ConfiguracionPage() {
 
         <DeliveryRateForm currentAmount={rate.amount} token={session!.backendToken} />
       </div>
+
+      <StoreSettingsManager initial={storeSettings} />
     </div>
   );
 }

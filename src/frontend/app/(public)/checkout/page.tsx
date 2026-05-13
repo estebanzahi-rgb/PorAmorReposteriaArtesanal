@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { CheckoutForm } from '@components/checkout/checkout-form';
 import { apiFetch } from '@lib/api';
 import { getAnonymousCart } from '@lib/cart-storage';
+import { useGA4 } from '../../../hooks/useGA4';
 import type { CartDto, CartItemDto, DeliveryRateDto } from '@types-app/index';
 
 interface DiscountPreview {
@@ -21,6 +22,7 @@ export default function CheckoutPage() {
   const [deliveryRate, setDeliveryRate] = useState(0);
   const [discountPreview, setDiscountPreview] = useState<DiscountPreview | null>(null);
   const [loading, setLoading] = useState(true);
+  const { trackBeginCheckout } = useGA4();
 
   useEffect(() => {
     async function load() {
@@ -33,6 +35,16 @@ export default function CheckoutPage() {
           if (cart.status === 'fulfilled') {
             setCartItems(cart.value.items);
             if (cart.value.items.length > 0) {
+              const total = cart.value.items.reduce((s, i) => s + i.unitPrice * i.quantity, 0);
+              trackBeginCheckout(
+                total,
+                cart.value.items.map((i) => ({
+                  id: i.productId,
+                  name: i.productName,
+                  price: i.unitPrice,
+                  quantity: i.quantity,
+                })),
+              );
               apiFetch<DiscountPreview>('/orders/discount-preview', {
                 method: 'POST',
                 token: session.backendToken,
