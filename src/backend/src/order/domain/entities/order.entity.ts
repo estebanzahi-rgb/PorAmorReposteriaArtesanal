@@ -1,5 +1,6 @@
 import { Money } from '../../../shared/domain/value-objects/money.vo';
 import { OrderPlacedEvent } from '../events/order-placed.event';
+import { OrderStatusChangedEvent } from '../events/order-status-changed.event';
 import { DomainEvent } from '../../../shared/domain/events/domain-event';
 import { OrderItem } from './order-item.entity';
 
@@ -44,6 +45,7 @@ export interface OrderCreateParams {
   deliveryCity?: string;
   deliveryNotes?: string;
   couponCode?: string;
+  scheduledAt?: Date;
 }
 
 export interface OrderReconstituteParams extends OrderCreateParams {
@@ -75,6 +77,7 @@ export class Order {
     public readonly deliveryNotes: string | undefined,
     public readonly couponCode: string | undefined,
     public readonly createdAt: Date,
+    public readonly scheduledAt: Date | undefined,
   ) {}
 
   static create(params: OrderCreateParams): Order {
@@ -99,6 +102,7 @@ export class Order {
       params.deliveryNotes,
       params.couponCode,
       new Date(),
+      params.scheduledAt,
     );
     order.confirmPlacement();
     return order;
@@ -126,6 +130,7 @@ export class Order {
       params.deliveryNotes,
       params.couponCode,
       params.createdAt,
+      params.scheduledAt,
     );
   }
 
@@ -138,6 +143,9 @@ export class Order {
       throw new Error('SHIPPED is only valid for DELIVERY orders');
     }
     this.status = newStatus;
+    this._domainEvents.push(
+      new OrderStatusChangedEvent(this.id, this.orderNumber, newStatus, this),
+    );
   }
 
   confirmPlacement(): void {

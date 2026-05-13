@@ -22,6 +22,7 @@ export interface PlaceOrderCommand {
   deliveryNotes?: string;
   paymentMethod: PaymentMethod;
   couponCode?: string;
+  scheduledAt?: Date;
   items: CheckoutItemCommand[];
 }
 

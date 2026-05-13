@@ -24,8 +24,9 @@ model User {
   role      UserRole @default(USER)
   createdAt DateTime @default(now())
 
-  cart   Cart?
-  orders Order[]
+  cart    Cart?
+  orders  Order[]
+  reviews Review[]
 
   @@map("users")
 }
@@ -57,6 +58,7 @@ model Product {
   categoryId  String
   category    Category      @relation(fields: [categoryId], references: [id])
   status      ProductStatus @default(INACTIVE)
+  availabilityStatus ProductAvailabilityStatus @default(AVAILABLE)
   images      String[]
   isCake      Boolean       @default(false)
   createdAt   DateTime      @default(now())
@@ -67,6 +69,7 @@ model Product {
   orderItems      OrderItem[]
   productDiscount ProductDiscount?
   quantityRule    QuantityDiscountRule?
+  reviews         Review[]
 
   @@map("products")
 }
@@ -74,6 +77,11 @@ model Product {
 enum ProductStatus {
   ACTIVE
   INACTIVE
+}
+
+enum ProductAvailabilityStatus {
+  AVAILABLE
+  OUT_OF_STOCK
 }
 
 model ProductVariant {
@@ -169,6 +177,7 @@ model Order {
   total          Decimal       @db.Decimal(10, 2)
   paymentMethod  PaymentMethod
   couponCode     String?
+  scheduledAt    DateTime?
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 
@@ -297,4 +306,40 @@ model Coupon {
 enum DiscountType {
   PERCENTAGE
   FIXED_VALUE
+}
+
+// ─────────────────────────────────────────────
+// STORE CONFIG
+// ─────────────────────────────────────────────
+
+// ─────────────────────────────────────────────
+// REVIEWS
+// ─────────────────────────────────────────────
+
+model Review {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  rating    Int      // 1-5
+  comment   String?
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
+  @@map("reviews")
+}
+
+// ─────────────────────────────────────────────
+// STORE CONFIG
+// ─────────────────────────────────────────────
+
+// Singleton — siempre un único registro con id='singleton'
+model StoreSettings {
+  id            String   @id @default("singleton")
+  leadTimeHours Int      @default(24)
+  updatedAt     DateTime @updatedAt
+  updatedBy     String   // email del admin que hizo el último cambio
+
+  @@map("store_settings")
 }

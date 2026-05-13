@@ -103,6 +103,7 @@ export class PlaceOrderImpl implements PlaceOrderUseCase {
       deliveryCity: command.deliveryCity,
       deliveryNotes: command.deliveryNotes,
       couponCode: command.couponCode,
+      scheduledAt: command.scheduledAt,
     });
 
     const saved = await this.orderRepo.save(order);

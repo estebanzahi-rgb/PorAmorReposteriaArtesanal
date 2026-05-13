@@ -73,7 +73,11 @@ export class OrderController {
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Crear pedido desde checkout' })
   async checkout(@Body() dto: PlaceOrderDto, @CurrentUser() user: AuthenticatedUser) {
-    const order = await this.placeOrder.execute({ ...dto, userId: user.id });
+    const order = await this.placeOrder.execute({
+      ...dto,
+      userId: user.id,
+      scheduledAt: dto.scheduledAt ? new Date(dto.scheduledAt) : undefined,
+    });
     return this.toResponse(order);
   }
 
@@ -126,6 +130,7 @@ export class OrderController {
       deliveryCity: order.deliveryCity,
       deliveryNotes: order.deliveryNotes,
       couponCode: order.couponCode,
+      scheduledAt: order.scheduledAt?.toISOString() ?? null,
       subtotal: order.subtotal.amount,
       deliveryCost: order.deliveryCost.amount,
       discountAmount: order.discountAmount.amount,

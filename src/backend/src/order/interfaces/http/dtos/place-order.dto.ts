@@ -3,6 +3,7 @@ import {
   IsArray,
   IsEmail,
   IsEnum,
+  IsISO8601,
   IsNotEmpty,
   IsNumber,
   IsObject,
@@ -46,6 +47,8 @@ export class PlaceOrderDto {
   @IsEnum(['BANK_TRANSFER', 'PSE', 'CARD', 'MERCADOPAGO']) paymentMethod: 'BANK_TRANSFER' | 'PSE' | 'CARD' | 'MERCADOPAGO';
 
   @IsString() @IsOptional() couponCode?: string;
+
+  @IsISO8601() @IsOptional() scheduledAt?: string;
 
   @IsArray()
   @ValidateNested({ each: true })

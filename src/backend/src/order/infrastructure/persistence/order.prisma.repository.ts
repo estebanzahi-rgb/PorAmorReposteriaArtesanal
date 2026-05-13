@@ -51,6 +51,7 @@ export class OrderPrismaRepository implements OrderRepository {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       paymentMethod: order.paymentMethod as any,
       couponCode: order.couponCode ?? null,
+      scheduledAt: order.scheduledAt ?? null,
     };
 
     const saved = await this.prisma.order.upsert({
@@ -157,6 +158,7 @@ export class OrderPrismaRepository implements OrderRepository {
       deliveryCity: raw.deliveryCity ?? undefined,
       deliveryNotes: raw.deliveryNotes ?? undefined,
       couponCode: raw.couponCode ?? undefined,
+      scheduledAt: raw.scheduledAt ?? undefined,
       createdAt: raw.createdAt,
     });
   }

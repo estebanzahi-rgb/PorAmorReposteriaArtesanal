@@ -7,6 +7,9 @@ import { CatalogModule } from './catalog/catalog.module';
 import { CartModule } from './cart/cart.module';
 import { OrderModule } from './order/order.module';
 import { NotificationModule } from './notification/notification.module';
+import { StoreConfigModule } from './store-config/store-config.module';
+import { MercadoPagoPaymentsModule } from './mercadopago/mercadopago.module';
+import { ReviewModule } from './review/review.module';
 
 @Module({
   imports: [
@@ -18,6 +21,9 @@ import { NotificationModule } from './notification/notification.module';
     CartModule,
     OrderModule,
     NotificationModule,
+    StoreConfigModule,
+    MercadoPagoPaymentsModule,
+    ReviewModule,
   ],
 })
 export class AppModule {}

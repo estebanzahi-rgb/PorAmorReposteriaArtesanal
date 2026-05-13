@@ -1,4 +1,5 @@
 import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   UpdateOrderStatusUseCase,
   UpdateOrderStatusCommand,
@@ -11,6 +12,7 @@ import { Order } from '../../domain/entities/order.entity';
 export class UpdateOrderStatusImpl implements UpdateOrderStatusUseCase {
   constructor(
     @Inject(ORDER_REPOSITORY) private readonly orderRepo: OrderRepository,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async execute(command: UpdateOrderStatusCommand): Promise<Order> {
@@ -21,6 +23,10 @@ export class UpdateOrderStatusImpl implements UpdateOrderStatusUseCase {
     } catch (err) {
       throw new BadRequestException((err as Error).message);
     }
-    return this.orderRepo.save(order);
+    const saved = await this.orderRepo.save(order);
+    for (const event of order.pullDomainEvents()) {
+      this.eventEmitter.emit(event.eventName, event);
+    }
+    return saved;
   }
 }
