@@ -15,6 +15,7 @@ interface Props {
   variants: ProductVariantDto[];
   quantityDiscountMinQty?: number;
   quantityDiscountPercentage?: number;
+  availabilityStatus?: 'AVAILABLE' | 'OUT_OF_STOCK';
 }
 
 export function ProductNonCakeSection({
@@ -26,15 +27,24 @@ export function ProductNonCakeSection({
   variants,
   quantityDiscountMinQty,
   quantityDiscountPercentage,
+  availabilityStatus = 'AVAILABLE',
 }: Props) {
   const [selectedVariant, setSelectedVariant] = useState<ProductVariantDto | null>(null);
   const [quantity, setQuantity] = useState(1);
+
+  const isOutOfStock = availabilityStatus === 'OUT_OF_STOCK';
 
   const effectiveBase = discountedPrice ?? basePrice;
   const finalPrice = selectedVariant ? effectiveBase + selectedVariant.priceModifier : effectiveBase;
 
   return (
     <div className="space-y-6">
+      {isOutOfStock && (
+        <div className="flex items-center gap-2 text-sm bg-muted border border-border text-muted-foreground rounded-xl px-4 py-3">
+          <span className="font-semibold">Producto agotado</span>
+          <span>— Actualmente no está disponible para la venta.</span>
+        </div>
+      )}
       <div className="flex items-center gap-3">
         {discountedPrice ? (
           <>
@@ -97,6 +107,7 @@ export function ProductNonCakeSection({
         unitPrice={finalPrice}
         imageUrl={imageUrl}
         quantity={quantity}
+        disabled={isOutOfStock}
       />
     </div>
   );

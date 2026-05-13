@@ -35,6 +35,11 @@ export function ProductCard({ product }: ProductCardProps) {
               -{product.activeDiscountPercentage}%
             </span>
           )}
+          {product.availabilityStatus === 'OUT_OF_STOCK' && (
+            <span className="absolute top-2 left-2 bg-muted text-muted-foreground text-xs font-semibold px-2 py-1 rounded-full border border-border">
+              Agotado
+            </span>
+          )}
         </div>
         <div className="p-4">
           <p className="text-xs font-medium text-brand-teal mb-1">{product.category.name}</p>

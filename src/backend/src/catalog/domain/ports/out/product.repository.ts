@@ -1,4 +1,4 @@
-import { Product } from '../../entities/product.entity';
+import { Product, ProductAvailabilityStatus } from '../../entities/product.entity';
 import { Category } from '../../entities/category.entity';
 import { ProductFilter } from '../in/get-products.use-case';
 import { ProductStatus } from '../../value-objects/product-status.vo';
@@ -10,4 +10,5 @@ export interface ProductRepository {
   findAllCategories(): Promise<Category[]>;
   save(product: Product): Promise<Product>;
   updateStatus(id: string, status: ProductStatus): Promise<Product>;
+  updateAvailability(id: string, status: ProductAvailabilityStatus): Promise<Product>;
 }

@@ -85,6 +85,7 @@ export class CatalogController {
       description: p.description,
       basePrice: p.basePrice.amount,
       status: p.status,
+      availabilityStatus: p.availabilityStatus,
       isCake: p.isCake,
       images: p.images,
       category: p.category

@@ -3,6 +3,8 @@ import { ProductStatus } from '../value-objects/product-status.vo';
 import { ProductVariant } from './product-variant.entity';
 import { Category } from './category.entity';
 
+export type ProductAvailabilityStatus = 'AVAILABLE' | 'OUT_OF_STOCK';
+
 export class Product {
   constructor(
     public readonly id: string,
@@ -19,10 +21,15 @@ export class Product {
     public readonly activeDiscountPercentage: number | undefined,
     public readonly createdAt: Date,
     public readonly updatedAt: Date,
+    public readonly availabilityStatus: ProductAvailabilityStatus = 'AVAILABLE',
   ) {}
 
   isActive(): boolean {
     return this.status === ProductStatus.ACTIVE;
+  }
+
+  isAvailableForPurchase(): boolean {
+    return this.isActive() && this.availabilityStatus === 'AVAILABLE';
   }
 
   static generateSlug(name: string): string {

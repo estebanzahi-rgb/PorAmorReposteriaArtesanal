@@ -8,7 +8,7 @@ import type {
 import { PrismaService } from '../../../shared/infrastructure/prisma/prisma.service';
 import { ProductRepository } from '../../domain/ports/out/product.repository';
 import { ProductFilter } from '../../domain/ports/in/get-products.use-case';
-import { Product } from '../../domain/entities/product.entity';
+import { Product, ProductAvailabilityStatus } from '../../domain/entities/product.entity';
 import { ProductVariant } from '../../domain/entities/product-variant.entity';
 import { Category } from '../../domain/entities/category.entity';
 import { ProductStatus } from '../../domain/value-objects/product-status.vo';
@@ -108,6 +108,16 @@ export class ProductPrismaRepository implements ProductRepository {
     return this.toDomain(record);
   }
 
+  async updateAvailability(id: string, status: ProductAvailabilityStatus): Promise<Product> {
+    const record = await this.prisma.product.update({
+      where: { id },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      data: { availabilityStatus: status as any },
+      include: INCLUDE,
+    });
+    return this.toDomain(record);
+  }
+
   private toDomain(record: ProductWithRelations): Product {
     const activeDiscount = record.productDiscount
       ? record.productDiscount.percentage
@@ -130,6 +140,8 @@ export class ProductPrismaRepository implements ProductRepository {
       activeDiscount ?? undefined,
       record.createdAt,
       record.updatedAt,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ((record as any).availabilityStatus ?? 'AVAILABLE') as ProductAvailabilityStatus,
     );
   }
 }

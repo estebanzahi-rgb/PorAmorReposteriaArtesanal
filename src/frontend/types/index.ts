@@ -1,5 +1,6 @@
 export type UserRole = 'USER' | 'ADMIN';
 export type ProductStatus = 'ACTIVE' | 'INACTIVE';
+export type ProductAvailabilityStatus = 'AVAILABLE' | 'OUT_OF_STOCK';
 export type DeliveryType = 'PICKUP' | 'DELIVERY';
 export type PaymentMethod = 'BANK_TRANSFER' | 'PSE' | 'CARD' | 'MERCADOPAGO';
 export type OrderStatus =
@@ -48,6 +49,7 @@ export interface ProductDto {
   description: string;
   basePrice: number;
   status: ProductStatus;
+  availabilityStatus: ProductAvailabilityStatus;
   isCake: boolean;
   images: string[];
   category: CategoryDto;
@@ -120,6 +122,7 @@ export interface PlaceOrderRequest {
   deliveryNotes?: string;
   paymentMethod: PaymentMethod;
   couponCode?: string;
+  scheduledAt?: string;
   items: Array<{
     productId: string;
     productName: string;

@@ -17,6 +17,7 @@ interface AddToCartButtonProps {
   imageUrl?: string;
   quantity?: number;
   className?: string;
+  disabled?: boolean;
 }
 
 export function AddToCartButton({
@@ -28,6 +29,7 @@ export function AddToCartButton({
   imageUrl,
   quantity = 1,
   className,
+  disabled = false,
 }: AddToCartButtonProps) {
   const { data: session } = useSession();
   const { refresh } = useCart();
@@ -57,15 +59,15 @@ export function AddToCartButton({
   return (
     <button
       onClick={handleAdd}
-      disabled={loading}
+      disabled={loading || disabled}
       className={cn(
         'w-full py-3 rounded-xl font-semibold text-white transition-all',
-        added ? 'bg-green-500' : 'bg-primary hover:opacity-90',
+        disabled ? 'bg-muted text-muted-foreground cursor-not-allowed' : added ? 'bg-green-500' : 'bg-primary hover:opacity-90',
         loading && 'opacity-70 cursor-not-allowed',
         className,
       )}
     >
-      {loading ? 'Agregando...' : added ? '¡Agregado! ✓' : 'Agregar al carrito'}
+      {disabled ? 'No disponible' : loading ? 'Agregando...' : added ? '¡Agregado! ✓' : 'Agregar al carrito'}
     </button>
   );
 }

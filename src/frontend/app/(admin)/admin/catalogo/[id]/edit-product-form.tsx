@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiFetch } from '@lib/api';
+import { ImageUploader } from '@components/admin/ImageUploader';
 import type { ProductDto } from '@types-app/index';
 
 interface Props {
@@ -14,6 +15,8 @@ export function EditProductForm({ product, token }: Props) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [availabilityStatus, setAvailabilityStatus] = useState(product.availabilityStatus);
+  const [togglingAvailability, setTogglingAvailability] = useState(false);
 
   const [form, setForm] = useState({
     name: product.name,
@@ -49,6 +52,21 @@ export function EditProductForm({ product, token }: Props) {
       setError(err instanceof Error ? err.message : 'Error al guardar');
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleToggleAvailability() {
+    setTogglingAvailability(true);
+    try {
+      const updated = await apiFetch<{ availabilityStatus: string }>(`/admin/catalog/${product.id}/availability`, {
+        method: 'PATCH',
+        token,
+      });
+      setAvailabilityStatus(updated.availabilityStatus as typeof availabilityStatus);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al cambiar disponibilidad');
+    } finally {
+      setTogglingAvailability(false);
     }
   }
 
@@ -105,13 +123,22 @@ export function EditProductForm({ product, token }: Props) {
         </div>
       </div>
 
-      <div className="space-y-1">
+      <div className="space-y-2">
         <label className="text-sm font-medium">URLs de imágenes (una por línea)</label>
         <textarea
           rows={3}
           value={form.imageUrls}
           onChange={(e) => setForm({ ...form, imageUrls: e.target.value })}
           className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none font-mono"
+        />
+        <p className="text-xs text-muted-foreground">O sube una imagen directamente:</p>
+        <ImageUploader
+          onUpload={(url) =>
+            setForm((prev) => ({
+              ...prev,
+              imageUrls: prev.imageUrls ? `${prev.imageUrls}\n${url}` : url,
+            }))
+          }
         />
       </div>
 
@@ -124,6 +151,29 @@ export function EditProductForm({ product, token }: Props) {
         />
         <span className="text-sm font-medium">Es torta personalizable</span>
       </label>
+
+      <div className="flex items-center justify-between rounded-xl border border-border px-4 py-3">
+        <div>
+          <p className="text-sm font-medium">Disponibilidad</p>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {availabilityStatus === 'AVAILABLE' ? 'Disponible para la venta' : 'Agotado — no se puede agregar al carrito'}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={handleToggleAvailability}
+          disabled={togglingAvailability}
+          className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50 ${
+            availabilityStatus === 'AVAILABLE' ? 'bg-green-500' : 'bg-muted-foreground'
+          }`}
+        >
+          <span
+            className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+              availabilityStatus === 'AVAILABLE' ? 'translate-x-5' : 'translate-x-0'
+            }`}
+          />
+        </button>
+      </div>
 
       <div className="flex gap-3 pt-2">
         <button

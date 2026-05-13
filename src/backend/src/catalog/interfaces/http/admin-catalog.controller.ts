@@ -24,6 +24,7 @@ import { ToggleProductStatusUseCase } from '../../domain/ports/in/toggle-product
 import { CreateCakeOptionUseCase } from '../../domain/ports/in/create-cake-option.use-case';
 import { ToggleCakeOptionUseCase } from '../../domain/ports/in/toggle-cake-option.use-case';
 import { CakeOptionRepository } from '../../domain/ports/out/cake-option.repository';
+import { ProductRepository } from '../../domain/ports/out/product.repository';
 import {
   GET_PRODUCTS_USE_CASE,
   GET_PRODUCT_BY_ID_USE_CASE,
@@ -33,6 +34,7 @@ import {
   CREATE_CAKE_OPTION_USE_CASE,
   TOGGLE_CAKE_OPTION_USE_CASE,
   CAKE_OPTION_REPOSITORY,
+  PRODUCT_REPOSITORY,
 } from '../../catalog.tokens';
 import { CreateProductDto } from './dtos/create-product.dto';
 import { UpdateProductDto } from './dtos/update-product.dto';
@@ -55,6 +57,7 @@ export class AdminCatalogController {
     @Inject(CREATE_CAKE_OPTION_USE_CASE) private readonly createCakeOption: CreateCakeOptionUseCase,
     @Inject(TOGGLE_CAKE_OPTION_USE_CASE) private readonly toggleCakeOption: ToggleCakeOptionUseCase,
     @Inject(CAKE_OPTION_REPOSITORY) private readonly cakeOptionRepo: CakeOptionRepository,
+    @Inject(PRODUCT_REPOSITORY) private readonly productRepo: ProductRepository,
   ) {}
 
   @Get()
@@ -108,6 +111,17 @@ export class AdminCatalogController {
     return this.toResponse(product);
   }
 
+  @Patch(':id/availability')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Marcar producto como disponible o agotado' })
+  async toggleAvailability(@Param('id') id: string) {
+    const product = await this.productRepo.findById(id);
+    if (!product) throw new NotFoundException('Producto no encontrado');
+    const next = product.availabilityStatus === 'AVAILABLE' ? 'OUT_OF_STOCK' : 'AVAILABLE';
+    const updated = await this.productRepo.updateAvailability(id, next);
+    return this.toResponse(updated);
+  }
+
   @Post('cake-options')
   @ApiOperation({ summary: 'Crear opción de torta' })
   async createOption(@Body() dto: CreateCakeOptionDto) {
@@ -131,6 +145,7 @@ export class AdminCatalogController {
       description: p.description,
       basePrice: p.basePrice.amount,
       status: p.status,
+      availabilityStatus: p.availabilityStatus,
       isCake: p.isCake,
       images: p.images,
       category: p.category

@@ -7,6 +7,7 @@ import { RemoveCartItemImpl } from './application/use-cases/remove-cart-item.imp
 import { MergeCartsImpl } from './application/use-cases/merge-carts.impl';
 import { ClearCartImpl } from './application/use-cases/clear-cart.impl';
 import { CartPrismaRepository } from './infrastructure/persistence/cart.prisma.repository';
+import { ProductAvailabilityPrismaAdapter } from './infrastructure/adapters/product-availability.prisma.adapter';
 import {
   CART_REPOSITORY,
   ADD_ITEM_TO_CART_USE_CASE,
@@ -15,12 +16,14 @@ import {
   REMOVE_CART_ITEM_USE_CASE,
   MERGE_CARTS_USE_CASE,
   CLEAR_CART_USE_CASE,
+  PRODUCT_AVAILABILITY_PORT,
 } from './cart.tokens';
 
 @Module({
   controllers: [CartController],
   providers: [
     { provide: CART_REPOSITORY, useClass: CartPrismaRepository },
+    { provide: PRODUCT_AVAILABILITY_PORT, useClass: ProductAvailabilityPrismaAdapter },
     { provide: GET_CART_USE_CASE, useClass: GetCartImpl },
     { provide: ADD_ITEM_TO_CART_USE_CASE, useClass: AddItemToCartImpl },
     { provide: UPDATE_CART_ITEM_USE_CASE, useClass: UpdateCartItemImpl },
