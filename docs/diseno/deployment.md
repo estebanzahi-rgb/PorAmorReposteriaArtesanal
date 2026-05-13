@@ -10,6 +10,9 @@
 | **Google Cloud Console** | OAuth 2.0 para login | Gratuito | console.cloud.google.com |
 | **Resend** | Envío de emails transaccionales | Free (100 emails/día) | resend.com |
 | **UptimeRobot** | Monitor de disponibilidad + keep-alive | Free | uptimerobot.com |
+| **Cloudinary** | Almacenamiento y CDN de imágenes de productos | Free (25 GB / 25 créditos/mes) | cloudinary.com |
+| **MercadoPago** | Pasarela de pagos online | Comisión por transacción | mercadopago.com.co |
+| **Google Analytics 4** | Analítica web | Gratuito | analytics.google.com |
 
 ---
 
@@ -30,6 +33,11 @@
 | `OWNER_EMAIL` | Email de la dueña del negocio | Recibe notificaciones de pedidos |
 | `OWNER_WHATSAPP` | WhatsApp del negocio | `+573001234567` |
 | `NODE_ENV` | Entorno de ejecución | `production` |
+| `MERCADOPAGO_ACCESS_TOKEN` | Access token de la app MercadoPago (producción) | `APP_USR-xxx-yyy` — desde MP Developers → Credenciales de producción |
+| `MERCADOPAGO_WEBHOOK_SECRET` | Clave secreta para validar firma HMAC de webhooks de MP | Generado en MP → Webhooks → Clave secreta |
+| `MERCADOPAGO_SUCCESS_URL` | URL de redirección tras pago exitoso en MP | `https://por-amor-reposteria-artesanal.vercel.app/checkout/success` |
+| `MERCADOPAGO_FAILURE_URL` | URL de redirección tras pago fallido en MP | `https://por-amor-reposteria-artesanal.vercel.app/checkout/failure` |
+| `MERCADOPAGO_PENDING_URL` | URL de redirección cuando el pago queda pendiente en MP | `https://por-amor-reposteria-artesanal.vercel.app/checkout/pending` |
 
 > `PORT` lo inyecta Render automáticamente — no configurar manualmente.
 
@@ -46,6 +54,11 @@
 | `API_URL` | URL del backend (server-side) | `https://poramorreposteriaartesanal.onrender.com/api` |
 | `NEXT_PUBLIC_API_URL` | URL del backend (client-side) | `https://poramorreposteriaartesanal.onrender.com/api` |
 | `NEXT_PUBLIC_OWNER_WHATSAPP` | WhatsApp sin `+` | `573001234567` |
+| `NEXT_PUBLIC_SITE_URL` | URL pública canónica del sitio, sin trailing slash | `https://por-amor-reposteria-artesanal.vercel.app` — usada por SEO (HU-03) y sitemap |
+| `NEXT_PUBLIC_GA_MEASUREMENT_ID` | Measurement ID de Google Analytics 4 | `G-XXXXXXXXXX` — desde GA4 → Admin → Data Streams (HU-07) |
+| `CLOUDINARY_CLOUD_NAME` | Nombre del cloud en Cloudinary | `mi-cloud-name` — desde Cloudinary Dashboard (HU-06) |
+| `CLOUDINARY_API_KEY` | API Key de Cloudinary | `123456789012345` — desde Cloudinary Dashboard (HU-06) |
+| `CLOUDINARY_API_SECRET` | API Secret de Cloudinary — **nunca exponer en cliente** | `abcdefghijklmnopqrstuvwxyz12` — desde Cloudinary Dashboard (HU-06) |
 
 ---
 
@@ -102,6 +115,21 @@ npm install --include=dev && npx prisma migrate deploy && npm run build
 - [ ] Catálogo carga productos desde la DB
 - [ ] Un pedido de prueba completo (catálogo → carrito → checkout)
 - [ ] Email de confirmación llega correctamente
+
+---
+
+## Checklist de go-live — Fase 2 (nuevas features)
+
+- [ ] Variables de entorno MercadoPago configuradas en Render
+- [ ] Variables de entorno Cloudinary configuradas en Vercel
+- [ ] Variables SEO y GA4 configuradas en Vercel (`NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_GA_MEASUREMENT_ID`)
+- [ ] Webhook de MercadoPago registrado en el Dashboard de MP apuntando a `https://poramorreposteriaartesanal.onrender.com/api/payments/mercadopago/webhook`
+- [ ] Migraciones de Fase 2 ejecutadas en Neon:
+  - `add_scheduled_at_to_orders` (HU-01)
+  - `add_store_settings` (HU-05)
+  - `add_product_availability` (HU-10)
+  - `add_reviews` (HU-09)
+- [ ] Cloud Cloudinary creado y credenciales copiadas
 
 ---
 
@@ -174,3 +202,24 @@ npm install --include=dev && npx prisma migrate deploy && npm run build
 | `ProductDiscount` | `product_discounts` |
 | `QuantityDiscountRule` | `quantity_discount_rules` |
 | `Coupon` | `coupons` |
+
+**Modelos nuevos — Fase 2:**
+
+| Modelo Prisma | Tabla en DB | HU |
+|---|---|---|
+| `StoreSettings` | `store_settings` | HU-05 |
+| `Review` | `reviews` | HU-09 |
+
+**Nuevos campos en modelos existentes — Fase 2:**
+
+| Modelo | Campo | Tipo | HU |
+|---|---|---|---|
+| `Order` | `scheduledAt` | `DateTime?` | HU-01 |
+| `Product` | `availabilityStatus` | `ProductAvailabilityStatus` | HU-10 |
+| `Product` | `availableFrom` | `DateTime?` | HU-10 |
+
+**Nuevos enums — Fase 2:**
+
+| Enum | Valores | HU |
+|---|---|---|
+| `ProductAvailabilityStatus` | `AVAILABLE`, `OUT_OF_STOCK`, `COMING_SOON` | HU-10 |
