@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { AuthController } from './interfaces/http/auth.controller';
+import { AdminUserController } from './interfaces/http/admin-user.controller';
 import { AuthenticateWithGoogleImpl } from './application/use-cases/authenticate-with-google.impl';
 import { UserPrismaRepository } from './infrastructure/persistence/user.prisma.repository';
 import { JwtStrategy } from './infrastructure/adapters/jwt.strategy';
@@ -19,7 +20,7 @@ import { USER_REPOSITORY, AUTHENTICATE_WITH_GOOGLE_USE_CASE } from './auth.token
       inject: [ConfigService],
     }),
   ],
-  controllers: [AuthController],
+  controllers: [AuthController, AdminUserController],
   providers: [
     { provide: USER_REPOSITORY, useClass: UserPrismaRepository },
     { provide: AUTHENTICATE_WITH_GOOGLE_USE_CASE, useClass: AuthenticateWithGoogleImpl },

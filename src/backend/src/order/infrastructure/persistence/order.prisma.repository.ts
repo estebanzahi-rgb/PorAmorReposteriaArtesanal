@@ -102,6 +102,9 @@ export class OrderPrismaRepository implements OrderRepository {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if (filter?.status) where.status = filter.status as any;
     if (filter?.deliveryType) where.deliveryType = filter.deliveryType;
+    if (filter?.customerName) {
+      where.customerName = { contains: filter.customerName, mode: 'insensitive' };
+    }
     if (filter?.dateFrom || filter?.dateTo) {
       where.createdAt = {
         ...(filter.dateFrom ? { gte: filter.dateFrom } : {}),

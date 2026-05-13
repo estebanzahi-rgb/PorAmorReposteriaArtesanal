@@ -13,6 +13,7 @@ const NAV = [
   { href: '/admin/configurador', label: 'Configurador', icon: '🎂' },
   { href: '/admin/descuentos', label: 'Descuentos', icon: '🏷️' },
   { href: '/admin/descuentos/cupones', label: 'Cupones', icon: '🎫' },
+  { href: '/admin/admins', label: 'Administradores', icon: '👤' },
   { href: '/admin/configuracion', label: 'Configuración', icon: '⚙️' },
 ];
 

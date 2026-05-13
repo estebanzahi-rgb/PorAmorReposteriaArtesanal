@@ -2,6 +2,8 @@ import { auth } from '@lib/auth';
 import { serverFetch } from '@lib/api';
 import { formatCOP } from '@lib/utils';
 import Link from 'next/link';
+import { Suspense } from 'react';
+import { OrderSearch } from './order-search';
 import type { OrderDto, OrderStatus } from '@types-app/index';
 
 const STATUS_LABELS: Record<OrderStatus, string> = {
@@ -25,14 +27,17 @@ const STATUS_COLORS: Record<OrderStatus, string> = {
 };
 
 interface Props {
-  searchParams: Promise<{ status?: string }>;
+  searchParams: Promise<{ status?: string; q?: string }>;
 }
 
 export default async function AdminPedidosPage({ searchParams }: Props) {
-  const { status } = await searchParams;
+  const { status, q } = await searchParams;
   const session = await auth();
 
-  const query = status ? `?status=${status}` : '';
+  const queryParts: string[] = [];
+  if (status) queryParts.push(`status=${status}`);
+  if (q) queryParts.push(`q=${encodeURIComponent(q)}`);
+  const query = queryParts.length ? `?${queryParts.join('&')}` : '';
   let orders: OrderDto[] = [];
   try {
     orders = await serverFetch<OrderDto[]>(`/admin/orders${query}`, {
@@ -56,25 +61,31 @@ export default async function AdminPedidosPage({ searchParams }: Props) {
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-[hsl(var(--brand-brown))]">Pedidos</h1>
 
-      {/* Filter chips */}
-      <div className="flex flex-wrap gap-2">
-        {statuses.map((s) => (
-          <Link
-            key={s.value}
-            href={s.value ? `/admin/pedidos?status=${s.value}` : '/admin/pedidos'}
-            className={`text-xs px-3 py-1.5 rounded-full font-medium transition-colors ${
-              (status ?? '') === s.value
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-muted text-muted-foreground hover:bg-muted/80'
-            }`}
-          >
-            {s.label}
-          </Link>
-        ))}
+      <div className="flex flex-wrap items-center gap-3">
+        {/* Filter chips */}
+        <div className="flex flex-wrap gap-2">
+          {statuses.map((s) => (
+            <Link
+              key={s.value}
+              href={s.value ? `/admin/pedidos?status=${s.value}${q ? `&q=${encodeURIComponent(q)}` : ''}` : `/admin/pedidos${q ? `?q=${encodeURIComponent(q)}` : ''}`}
+              className={`text-xs px-3 py-1.5 rounded-full font-medium transition-colors ${
+                (status ?? '') === s.value
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-muted text-muted-foreground hover:bg-muted/80'
+              }`}
+            >
+              {s.label}
+            </Link>
+          ))}
+        </div>
+        <Suspense>
+          <OrderSearch />
+        </Suspense>
       </div>
 
+      <div className="overflow-x-auto">
       <div className="bg-card border border-border rounded-xl overflow-hidden">
-        <table className="w-full text-sm">
+        <table className="w-full text-sm min-w-[640px]">
           <thead className="bg-muted/50 border-b border-border">
             <tr>
               <th className="text-left px-4 py-3 font-medium text-muted-foreground">Pedido</th>
@@ -130,6 +141,7 @@ export default async function AdminPedidosPage({ searchParams }: Props) {
             )}
           </tbody>
         </table>
+      </div>
       </div>
     </div>
   );

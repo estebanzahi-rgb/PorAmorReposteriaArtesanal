@@ -20,6 +20,7 @@ export class SendOrderConfirmationImpl implements SendOrderConfirmationUseCase {
   ) {}
 
   async execute(order: Order): Promise<void> {
+    const ownerEmail = this.configService.get<string>('OWNER_EMAIL', '');
     const ownerWhatsapp = this.configService.get<string>('OWNER_WHATSAPP', '');
     const waText = encodeURIComponent(
       `Hola! Realicé el pedido ${order.orderNumber} en PorAmor Repostería. Quedo pendiente de confirmación.`,
@@ -35,6 +36,7 @@ export class SendOrderConfirmationImpl implements SendOrderConfirmationUseCase {
       PSE: 'PSE',
       CARD: 'Tarjeta de crédito/débito',
       MERCADOPAGO: 'Mercado Pago',
+      BANK_TRANSFER: 'Transferencia bancaria (Bancolombia)',
     };
 
     const itemsHtml = order.items
@@ -52,8 +54,10 @@ export class SendOrderConfirmationImpl implements SendOrderConfirmationUseCase {
 <!DOCTYPE html>
 <html lang="es">
 <body style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px;color:#333">
-  <h1 style="color:#8B4513">¡Gracias por tu pedido, ${order.customerName}!</h1>
-  <p>Tu pedido <strong>${order.orderNumber}</strong> fue recibido y está siendo procesado.</p>
+  <h1 style="color:#8B4513">Nuevo pedido recibido — ${order.orderNumber}</h1>
+  <p><strong>Cliente:</strong> ${order.customerName}</p>
+  <p><strong>Email:</strong> ${order.customerEmail}</p>
+  <p><strong>Teléfono:</strong> ${order.customerPhone}</p>
 
   <table style="width:100%;border-collapse:collapse;margin:16px 0">
     <thead>
@@ -95,8 +99,8 @@ export class SendOrderConfirmationImpl implements SendOrderConfirmationUseCase {
 </html>`;
 
     await this.emailPort.send({
-      to: order.customerEmail,
-      subject: `Pedido ${order.orderNumber} recibido — PorAmor Repostería`,
+      to: ownerEmail,
+      subject: `Nuevo pedido ${order.orderNumber} — ${order.customerName}`,
       html,
     });
   }

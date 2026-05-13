@@ -2,7 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
-import { getAnonymousCart } from '@lib/cart-storage';
+import { getAnonymousCart, clearAnonymousCart } from '@lib/cart-storage';
 import { apiFetch } from '@lib/api';
 import type { CartDto } from '@types-app/index';
 
@@ -29,7 +29,26 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }, [session]);
 
   useEffect(() => {
-    refresh();
+    if (!session?.backendToken) {
+      refresh();
+      return;
+    }
+
+    const anonItems = getAnonymousCart();
+    if (anonItems.length > 0) {
+      apiFetch<CartDto>('/cart/merge', {
+        method: 'POST',
+        token: session.backendToken,
+        body: JSON.stringify({ anonymousItems: anonItems }),
+      })
+        .then(() => {
+          clearAnonymousCart();
+          refresh();
+        })
+        .catch(() => refresh());
+    } else {
+      refresh();
+    }
   }, [refresh]);
 
   return <CartContext.Provider value={{ count, refresh }}>{children}</CartContext.Provider>;

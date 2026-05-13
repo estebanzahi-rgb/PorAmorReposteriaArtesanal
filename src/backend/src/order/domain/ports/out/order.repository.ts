@@ -6,6 +6,7 @@ export interface OrderFilter {
   deliveryType?: DeliveryType;
   dateFrom?: Date;
   dateTo?: Date;
+  customerName?: string;
 }
 
 export interface OrderRepository {

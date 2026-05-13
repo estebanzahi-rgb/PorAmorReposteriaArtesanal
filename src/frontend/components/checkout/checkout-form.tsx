@@ -279,10 +279,12 @@ export function CheckoutForm({ cartItems, deliveryRate, discountPreview }: Check
                 <span>-{formatCOP(discountPreview.regularDiscount)}</span>
               </div>
             )}
-            <div className="flex justify-between text-muted-foreground">
-              <span>Domicilio</span>
-              <span>{deliveryType === 'DELIVERY' ? formatCOP(shipping) : 'Gratis'}</span>
-            </div>
+            {deliveryType === 'DELIVERY' && (
+              <div className="flex justify-between text-muted-foreground">
+                <span>Domicilio</span>
+                <span>{formatCOP(shipping)}</span>
+              </div>
+            )}
           </div>
 
           <div className="border-t border-border pt-3 flex justify-between font-bold text-lg">

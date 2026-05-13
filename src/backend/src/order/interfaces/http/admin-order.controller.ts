@@ -34,10 +34,12 @@ export class AdminOrderController {
   async listAll(
     @Query('status') status?: string,
     @Query('deliveryType') deliveryType?: string,
+    @Query('q') q?: string,
   ) {
     const orders = await this.orderRepo.findAll({
       ...(status ? { status: status as Order['status'] } : {}),
       ...(deliveryType ? { deliveryType: deliveryType as Order['deliveryType'] } : {}),
+      ...(q ? { customerName: q } : {}),
     });
     return orders.map((o) => this.toResponse(o));
   }

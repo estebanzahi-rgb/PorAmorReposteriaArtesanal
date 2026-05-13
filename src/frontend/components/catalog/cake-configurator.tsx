@@ -1,9 +1,12 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { useSession } from 'next-auth/react';
 import { cn, formatCOP } from '@lib/utils';
 import { addToAnonymousCart } from '@lib/cart-storage';
-import type { CakeConfiguratorOptionsDto, CakeOptionDto } from '@types-app/index';
+import { apiFetch } from '@lib/api';
+import { useCart } from '@lib/cart-context';
+import type { CakeConfiguratorOptionsDto, CakeOptionDto, CartDto } from '@types-app/index';
 
 type CakeDimension = 'SIZE' | 'FLAVOR' | 'FILLING' | 'TOPPING' | 'TOPPER';
 type ToppingType = 'NAKED' | 'VINTAGE';
@@ -31,12 +34,15 @@ export function CakeConfigurator({
   options,
   onAddToCart,
 }: CakeConfiguratorProps) {
+  const { data: session } = useSession();
+  const { refresh } = useCart();
   const [selected, setSelected] = useState<Partial<Record<CakeDimension, CakeOptionDto>>>({});
   const [toppingType, setToppingType] = useState<ToppingType>('NAKED');
   const [toppingDescription, setToppingDescription] = useState('');
   const [message, setMessage] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const totalPrice = useMemo(() => {
     const size = selected.SIZE?.priceModifier ?? 0;
@@ -49,31 +55,53 @@ export function CakeConfigurator({
 
   const isComplete = selected.SIZE && selected.FLAVOR && selected.FILLING;
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (!isComplete) return;
     if (toppingType === 'VINTAGE' && !toppingDescription.trim()) return;
 
-    addToAnonymousCart({
-      productId,
-      productName,
-      cakeConfig: {
-        sizeId: selected.SIZE!.id,
-        flavorId: selected.FLAVOR!.id,
-        fillingId: selected.FILLING!.id,
-        toppingType,
-        ...(toppingDescription ? { toppingDescription } : {}),
-        ...(selected.TOPPING ? { toppingId: selected.TOPPING.id } : {}),
-        ...(selected.TOPPER ? { topperId: selected.TOPPER.id } : {}),
-        ...(message ? { message } : {}),
-      },
-      quantity,
-      unitPrice: totalPrice,
-      imageUrl: productImage,
-    });
+    const cakeConfig = {
+      sizeId: selected.SIZE!.id,
+      flavorId: selected.FLAVOR!.id,
+      fillingId: selected.FILLING!.id,
+      toppingType,
+      ...(toppingDescription ? { toppingDescription } : {}),
+      ...(selected.TOPPING ? { toppingId: selected.TOPPING.id } : {}),
+      ...(selected.TOPPER ? { topperId: selected.TOPPER.id } : {}),
+      ...(message ? { message } : {}),
+    };
 
-    setAdded(true);
-    onAddToCart?.();
-    setTimeout(() => setAdded(false), 2000);
+    setLoading(true);
+    try {
+      if (session?.backendToken) {
+        await apiFetch<CartDto>('/cart/items', {
+          method: 'POST',
+          token: session.backendToken,
+          body: JSON.stringify({
+            productId,
+            productName,
+            cakeConfig,
+            quantity,
+            unitPrice: totalPrice,
+            imageUrl: productImage,
+          }),
+        });
+      } else {
+        addToAnonymousCart({
+          productId,
+          productName,
+          cakeConfig,
+          quantity,
+          unitPrice: totalPrice,
+          imageUrl: productImage,
+        });
+      }
+      refresh();
+      setAdded(true);
+      onAddToCart?.();
+      setTimeout(() => setAdded(false), 2000);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const renderDimension = (dim: CakeDimension, dimOptions: CakeOptionDto[]) => {
@@ -202,17 +230,17 @@ export function CakeConfigurator({
 
       <button
         onClick={handleAdd}
-        disabled={!isComplete || (toppingType === 'VINTAGE' && !toppingDescription.trim())}
+        disabled={!isComplete || (toppingType === 'VINTAGE' && !toppingDescription.trim()) || loading}
         className={cn(
           'w-full py-3 rounded-xl font-semibold text-white transition-all',
-          isComplete && !(toppingType === 'VINTAGE' && !toppingDescription.trim())
+          isComplete && !(toppingType === 'VINTAGE' && !toppingDescription.trim()) && !loading
             ? added
               ? 'bg-green-500'
               : 'bg-primary hover:opacity-90'
             : 'bg-muted text-muted-foreground cursor-not-allowed',
         )}
       >
-        {added ? '¡Agregado al carrito! ✓' : 'Agregar al carrito'}
+        {loading ? 'Agregando...' : added ? '¡Agregado al carrito! ✓' : 'Agregar al carrito'}
       </button>
 
       {!isComplete && (
