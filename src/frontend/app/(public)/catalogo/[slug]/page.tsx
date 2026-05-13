@@ -3,7 +3,10 @@ import Image from 'next/image';
 import { serverFetch } from '@lib/api';
 import { CakeConfigurator } from '@components/catalog/cake-configurator';
 import { ProductNonCakeSection } from '@components/catalog/product-non-cake-section';
+import { ProductViewTracker } from '@components/analytics/ProductViewTracker';
+import { ProductReviews } from '@components/reviews/ProductReviews';
 import type { ProductDto, CakeConfiguratorOptionsDto } from '@types-app/index';
+import type { ReviewDto } from '../../../../types/review';
 import type { Metadata } from 'next';
 
 interface PageProps {
@@ -14,7 +17,17 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { slug } = await params;
   try {
     const product = await serverFetch<ProductDto>(`/catalog/${slug}`);
-    return { title: product.name, description: product.description };
+    return {
+      title: product.name,
+      description: product.description.slice(0, 155),
+      openGraph: {
+        title: `${product.name} — PorAmor Repostería Artesanal`,
+        description: product.description.slice(0, 155),
+        images: product.images[0] ? [{ url: product.images[0] }] : [],
+        url: `${process.env.NEXT_PUBLIC_SITE_URL}/catalogo/${product.slug}`,
+        type: 'website',
+      },
+    };
   } catch {
     return { title: 'Producto no encontrado' };
   }
@@ -24,6 +37,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
   const { slug } = await params;
   let product: ProductDto;
   let cakeOptions: CakeConfiguratorOptionsDto | null = null;
+  let reviews: ReviewDto[] = [];
 
   try {
     product = await serverFetch<ProductDto>(`/catalog/${slug}`);
@@ -31,13 +45,12 @@ export default async function ProductDetailPage({ params }: PageProps) {
     notFound();
   }
 
-  if (product.isCake) {
-    try {
-      cakeOptions = await serverFetch<CakeConfiguratorOptionsDto>('/catalog/cake-configurator');
-    } catch {
-      cakeOptions = null;
-    }
-  }
+  [cakeOptions, reviews] = await Promise.all([
+    product.isCake
+      ? serverFetch<CakeConfiguratorOptionsDto>('/catalog/cake-configurator').catch(() => null)
+      : Promise.resolve(null),
+    serverFetch<ReviewDto[]>(`/products/${product.id}/reviews`).catch(() => []),
+  ]);
 
   const mainImage = product.images?.[0];
   const discountedPrice = product.activeDiscountPercentage
@@ -46,6 +59,12 @@ export default async function ProductDetailPage({ params }: PageProps) {
 
   return (
     <div className="min-h-screen bg-background">
+      <ProductViewTracker
+        id={product.id}
+        name={product.name}
+        price={product.basePrice}
+        category={product.category.name}
+      />
       <div className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Imagen */}
@@ -95,10 +114,16 @@ export default async function ProductDetailPage({ params }: PageProps) {
                   variants={product.variants}
                   quantityDiscountMinQty={product.quantityDiscount?.minQuantity}
                   quantityDiscountPercentage={product.quantityDiscount?.percentage}
+                  availabilityStatus={product.availabilityStatus}
                 />
               )
             )}
           </div>
+        </div>
+
+        {/* Reviews */}
+        <div className="mt-16 max-w-2xl">
+          <ProductReviews productId={product.id} initialReviews={reviews} />
         </div>
       </div>
     </div>
