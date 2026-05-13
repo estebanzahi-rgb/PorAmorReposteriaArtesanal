@@ -7,14 +7,13 @@ import { formatCOP } from '@lib/utils';
 import { apiFetch } from '@lib/api';
 import { clearAnonymousCart } from '@lib/cart-storage';
 import { useCart } from '@lib/cart-context';
+import { ScheduledAtPicker } from './ScheduledAtPicker';
 import type { CartItemDto, OrderDto, PlaceOrderRequest, DeliveryType, PaymentMethod } from '@types-app/index';
 
-// Métodos de pago para integración futura:
-// const FUTURE_PAYMENT_OPTIONS: { value: PaymentMethod; label: string; icon: string }[] = [
-//   { value: 'PSE', label: 'PSE', icon: '🏦' },
-//   { value: 'CARD', label: 'Tarjeta crédito/débito', icon: '💳' },
-//   { value: 'MERCADOPAGO', label: 'Mercado Pago', icon: '💚' },
-// ];
+const PAYMENT_OPTIONS: { value: PaymentMethod; label: string; icon: string; note: string }[] = [
+  { value: 'BANK_TRANSFER', label: 'Transferencia bancaria', icon: '🏦', note: 'Bancolombia' },
+  { value: 'MERCADOPAGO', label: 'Mercado Pago', icon: '💚', note: 'Tarjeta, PSE y más' },
+];
 
 interface DiscountPreview {
   regularDiscount: number;
@@ -37,6 +36,7 @@ export function CheckoutForm({ cartItems, deliveryRate, discountPreview }: Check
   const [deliveryType, setDeliveryType] = useState<DeliveryType>('PICKUP');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('BANK_TRANSFER');
   const [couponCode, setCouponCode] = useState('');
+  const [scheduledAt, setScheduledAt] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
@@ -82,6 +82,7 @@ export function CheckoutForm({ cartItems, deliveryRate, discountPreview }: Check
       deliveryNotes: form.deliveryNotes || undefined,
       paymentMethod,
       couponCode: couponCode.trim().toUpperCase() || undefined,
+      scheduledAt: scheduledAt ? new Date(scheduledAt).toISOString() : undefined,
       items: cartItems.map((i) => ({
         productId: i.productId,
         productName: i.productName,
@@ -103,6 +104,16 @@ export function CheckoutForm({ cartItems, deliveryRate, discountPreview }: Check
       await apiFetch('/cart', { method: 'DELETE', token: session.backendToken }).catch(() => {});
       clearAnonymousCart();
       refresh();
+
+      if (paymentMethod === 'MERCADOPAGO') {
+        const { initPoint } = await apiFetch<{ initPoint: string }>(
+          '/payments/mercadopago/create-preference',
+          { method: 'POST', token: session.backendToken, body: JSON.stringify({ orderId: order.id }) },
+        );
+        window.location.href = initPoint;
+        return;
+      }
+
       router.push(`/checkout/confirmacion/${order.id}`);
     } catch (err) {
       setError((err as Error).message ?? 'Error al procesar el pedido');
@@ -220,17 +231,43 @@ export function CheckoutForm({ cartItems, deliveryRate, discountPreview }: Check
         {/* Payment method */}
         <section className="bg-card border border-border rounded-2xl p-6 space-y-4">
           <h2 className="text-lg font-semibold">Método de pago</h2>
-          <div className="flex items-start gap-3 p-4 border-2 border-primary bg-primary/5 rounded-xl">
-            <span className="text-2xl">🏦</span>
-            <div className="space-y-1">
-              <p className="font-semibold text-sm">Transferencia bancaria — Bancolombia</p>
-              <p className="text-sm text-muted-foreground">Cuenta de ahorros: <strong>123-456-777</strong></p>
-              <p className="text-sm text-muted-foreground">Llave de transferencia: <strong>1036626558</strong></p>
-              <p className="text-xs text-muted-foreground mt-2">
-                Después de confirmar tu pedido, envía el comprobante por WhatsApp para agilizar el proceso.
-              </p>
-            </div>
+          <div className="grid grid-cols-2 gap-3">
+            {PAYMENT_OPTIONS.map(({ value, icon, label, note }) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setPaymentMethod(value)}
+                className={`flex flex-col items-center gap-1 p-4 border-2 rounded-xl transition-colors ${
+                  paymentMethod === value
+                    ? 'border-primary bg-primary/5'
+                    : 'border-border hover:border-primary/40'
+                }`}
+              >
+                <span className="text-2xl">{icon}</span>
+                <span className="font-medium text-sm">{label}</span>
+                <span className="text-xs text-muted-foreground">{note}</span>
+              </button>
+            ))}
           </div>
+
+          {paymentMethod === 'BANK_TRANSFER' && (
+            <div className="flex items-start gap-3 p-4 border border-border rounded-xl bg-muted/30">
+              <div className="space-y-1 text-sm">
+                <p className="font-semibold">Bancolombia — Cuenta de ahorros</p>
+                <p className="text-muted-foreground">Número: <strong>123-456-777</strong></p>
+                <p className="text-muted-foreground">Llave: <strong>1036626558</strong></p>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Después de confirmar, envía el comprobante por WhatsApp.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {paymentMethod === 'MERCADOPAGO' && (
+            <p className="text-sm text-muted-foreground">
+              Serás redirigido a Mercado Pago para completar el pago de forma segura.
+            </p>
+          )}
         </section>
 
         {/* Coupon */}
@@ -248,6 +285,8 @@ export function CheckoutForm({ cartItems, deliveryRate, discountPreview }: Check
             El descuento del cupón se aplica al confirmar el pedido.
           </p>
         </section>
+
+        <ScheduledAtPicker value={scheduledAt} onChange={setScheduledAt} />
       </div>
 
       {/* Right column — summary */}
@@ -301,7 +340,11 @@ export function CheckoutForm({ cartItems, deliveryRate, discountPreview }: Check
             disabled={submitting || cartItems.length === 0}
             className="w-full py-3 bg-primary text-white rounded-xl font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {submitting ? 'Procesando...' : 'Confirmar pedido'}
+            {submitting
+              ? 'Procesando...'
+              : paymentMethod === 'MERCADOPAGO'
+              ? 'Pagar con Mercado Pago'
+              : 'Confirmar pedido'}
           </button>
 
           <p className="text-xs text-center text-muted-foreground">
