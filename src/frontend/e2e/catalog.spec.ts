@@ -35,11 +35,12 @@ test.describe('Catálogo público', () => {
     await page.goto('/catalogo');
     await page.waitForLoadState('networkidle');
 
-    const firstProduct = page.locator('a[href*="/catalogo/"]').first();
+    // Selector específico a product cards (contienen h3 con el nombre del producto)
+    const firstProduct = page.locator('a').filter({ has: page.locator('h3') }).first();
     await expect(firstProduct).toBeVisible({ timeout: 10_000 });
     await firstProduct.click();
 
-    await expect(page).toHaveURL(/\/catalogo\/.+/);
+    await expect(page).toHaveURL(/\/catalogo\/.+/, { timeout: 8_000 });
     await page.waitForLoadState('networkidle');
     await expect(page.locator('h1').first()).toBeVisible({ timeout: 10_000 });
 

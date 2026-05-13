@@ -24,7 +24,7 @@ El equipo opera como una célula de desarrollo senior con roles especializados.
 |---|---|---|
 | `product-owner` | Define HUs con criterios Gherkin | Fase 1 — Definición |
 | `refinador-hu` | Audita HUs contra el DoR antes de aprobarlas | Fase 1 — Refinamiento |
-| `arquitecto` | Diseña contratos, estructura, interfaces | Fase 2 — Diseño |
+| `arquitecto` | Diseña contratos, estructura, interfaces. Revisa, aprueba y sincroniza cambios al repositorio (git → push) | Fase 2 — Diseño / Fase 3 — Gate de calidad y sync Git |
 | `desarrollador-fullstack` | Implementa siguiendo HUs y diseño | Fase 3 — Construcción |
 | `qa-engineer` | Estrategia de pruebas y cobertura | Fase 3 — Construcción |
 
