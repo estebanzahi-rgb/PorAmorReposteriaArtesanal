@@ -76,10 +76,22 @@ Entonces mi carrito muestra ambas configuraciones como ítems separados
 Y el precio total refleja la suma de ambas configuraciones
 ```
 
+### Escenario 6: Checkout carga después de que la fusión termina (no antes)
+
+```gherkin
+Dado que tengo productos en el carrito anónimo
+Y navego a /checkout sin sesión
+Cuando me autentico y soy redirigido de vuelta a /checkout
+Entonces el spinner se muestra hasta que la fusión finalice
+Y los productos del carrito anónimo aparecen correctamente en el formulario de checkout
+Y no veo el mensaje "Tu carrito está vacío" de forma errónea
+```
+
 ## Edge Cases
 
 - Fallo de red durante la fusión → el carrito anónimo en localStorage no se borra hasta confirmar la fusión exitosa en el servidor
 - Usuario que se autentica desde dos pestañas simultáneamente → la fusión debe ser idempotente y no duplicar ítems
+- Race condition en checkout post-login → `CartProvider` expone `isMerging: boolean`; el checkout espera `isMerging=false` antes de llamar `GET /cart` (ver ADR-001)
 
 ## Fuera de alcance
 
@@ -93,3 +105,4 @@ Y el precio total refleja la suma de ambas configuraciones
 | 2026-05-08 | PO | Creación inicial |
 | 2026-05-08 | Refinador | Escenario 5 agregado para CakeConfiguration distintas. Todos los Entonces observables |
 | 2026-05-08 | Arquitecto | Idempotencia documentada. Limpieza de localStorage condicionada a éxito del servidor. MergeCartsUseCase definido |
+| 2026-05-13 | Arquitecto | Escenario 6 agregado. Race condition documentada con referencia a ADR-001. isMerging flag requerido en CartProvider |

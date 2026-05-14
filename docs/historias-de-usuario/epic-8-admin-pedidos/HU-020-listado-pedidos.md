@@ -23,6 +23,7 @@ Yo como **administradora** quiero **ver el listado de todos los pedidos con filt
 - **Puerto de salida:** `OrderRepository.findAll(filter)`
 - **Capa Next.js:** Server Component con parámetros de URL como filtros
 - **Restricciones técnicas:** Ordenados por fecha de creación descendente por defecto. Solo visible para rol ADMIN.
+- **Layout responsivo:** Layout dual obligatorio — cards en `md:hidden` (con botón de acción a ancho completo) y tabla en `hidden md:block`. No usar tabla única con `overflow-x-auto` en móvil; el scroll horizontal es no discoverable en touch. Ver ADR-003.
 
 ## Criterios de Aceptación
 
@@ -86,3 +87,4 @@ Entonces veo el mensaje: "No hay pedidos que coincidan con los filtros aplicados
 | 2026-05-08 | PO | Creación inicial |
 | 2026-05-08 | Refinador | Escenario 5 para lista vacía. Mensajes exactos |
 | 2026-05-08 | Arquitecto | Límite de 50 pedidos por defecto. Ordenamiento por fecha descendente |
+| 2026-05-13 | Arquitecto | Layout dual (cards móvil + tabla desktop) documentado en Notas de Arquitectura. Referencia a ADR-003 |
