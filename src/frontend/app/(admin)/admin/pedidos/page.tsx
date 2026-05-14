@@ -83,65 +83,102 @@ export default async function AdminPedidosPage({ searchParams }: Props) {
         </Suspense>
       </div>
 
-      <div className="overflow-x-auto">
-      <div className="bg-card border border-border rounded-xl overflow-hidden">
-        <table className="w-full text-sm min-w-[640px]">
-          <thead className="bg-muted/50 border-b border-border">
-            <tr>
-              <th className="text-left px-4 py-3 font-medium text-muted-foreground">Pedido</th>
-              <th className="text-left px-4 py-3 font-medium text-muted-foreground">Cliente</th>
-              <th className="text-left px-4 py-3 font-medium text-muted-foreground">Entrega</th>
-              <th className="text-center px-4 py-3 font-medium text-muted-foreground">Estado</th>
-              <th className="text-right px-4 py-3 font-medium text-muted-foreground">Total</th>
-              <th className="text-right px-4 py-3 font-medium text-muted-foreground">Fecha</th>
-              <th className="text-right px-4 py-3 font-medium text-muted-foreground"></th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {orders.length === 0 ? (
-              <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
-                  No hay pedidos.
-                </td>
-              </tr>
-            ) : (
-              orders.map((order) => (
-                <tr key={order.id} className="hover:bg-muted/20 transition-colors">
-                  <td className="px-4 py-3">
-                    <p className="font-mono font-medium">{order.orderNumber}</p>
-                  </td>
-                  <td className="px-4 py-3">
-                    <p className="font-medium">{order.customerName}</p>
-                    <p className="text-xs text-muted-foreground">{order.customerPhone}</p>
-                  </td>
-                  <td className="px-4 py-3 text-muted-foreground">
-                    {order.deliveryType === 'DELIVERY' ? 'Domicilio' : 'Recogida'}
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <span
-                      className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_COLORS[order.status] ?? ''}`}
-                    >
-                      {STATUS_LABELS[order.status] ?? order.status}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-right font-semibold">{formatCOP(order.total)}</td>
-                  <td className="px-4 py-3 text-right text-muted-foreground text-xs">
+      {/* Mobile — cards */}
+      <div className="md:hidden space-y-3">
+        {orders.length === 0 ? (
+          <p className="text-center text-muted-foreground py-8">No hay pedidos.</p>
+        ) : (
+          orders.map((order) => (
+            <div key={order.id} className="bg-card border border-border rounded-xl p-4 space-y-3">
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <p className="font-mono font-semibold text-sm">{order.orderNumber}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
                     {new Date(order.createdAt).toLocaleDateString('es-CO')}
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <Link
-                      href={`/admin/pedidos/${order.id}`}
-                      className="text-xs px-3 py-1 rounded-md border border-border hover:bg-muted transition-colors"
-                    >
-                      Ver
-                    </Link>
+                  </p>
+                </div>
+                <span className={`text-xs px-2 py-0.5 rounded-full font-medium shrink-0 ${STATUS_COLORS[order.status] ?? ''}`}>
+                  {STATUS_LABELS[order.status] ?? order.status}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <div>
+                  <p className="font-medium">{order.customerName}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {order.deliveryType === 'DELIVERY' ? '🛵 Domicilio' : '🏪 Recogida'}
+                  </p>
+                </div>
+                <p className="font-bold text-base">{formatCOP(order.total)}</p>
+              </div>
+              <Link
+                href={`/admin/pedidos/${order.id}`}
+                className="block w-full text-center text-sm px-4 py-2 rounded-lg border border-border hover:bg-muted transition-colors font-medium"
+              >
+                Ver pedido →
+              </Link>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Desktop — table */}
+      <div className="hidden md:block overflow-x-auto">
+        <div className="bg-card border border-border rounded-xl overflow-hidden">
+          <table className="w-full text-sm">
+            <thead className="bg-muted/50 border-b border-border">
+              <tr>
+                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Pedido</th>
+                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Cliente</th>
+                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Entrega</th>
+                <th className="text-center px-4 py-3 font-medium text-muted-foreground">Estado</th>
+                <th className="text-right px-4 py-3 font-medium text-muted-foreground">Total</th>
+                <th className="text-right px-4 py-3 font-medium text-muted-foreground">Fecha</th>
+                <th className="text-right px-4 py-3 font-medium text-muted-foreground"></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {orders.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
+                    No hay pedidos.
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+              ) : (
+                orders.map((order) => (
+                  <tr key={order.id} className="hover:bg-muted/20 transition-colors">
+                    <td className="px-4 py-3">
+                      <p className="font-mono font-medium">{order.orderNumber}</p>
+                    </td>
+                    <td className="px-4 py-3">
+                      <p className="font-medium">{order.customerName}</p>
+                      <p className="text-xs text-muted-foreground">{order.customerPhone}</p>
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground">
+                      {order.deliveryType === 'DELIVERY' ? 'Domicilio' : 'Recogida'}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_COLORS[order.status] ?? ''}`}>
+                        {STATUS_LABELS[order.status] ?? order.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right font-semibold">{formatCOP(order.total)}</td>
+                    <td className="px-4 py-3 text-right text-muted-foreground text-xs">
+                      {new Date(order.createdAt).toLocaleDateString('es-CO')}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <Link
+                        href={`/admin/pedidos/${order.id}`}
+                        className="text-xs px-3 py-1 rounded-md border border-border hover:bg-muted transition-colors"
+                      >
+                        Ver
+                      </Link>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
