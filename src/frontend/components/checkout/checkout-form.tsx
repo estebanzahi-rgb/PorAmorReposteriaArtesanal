@@ -10,9 +10,9 @@ import { useCart } from '@lib/cart-context';
 import { ScheduledAtPicker } from './ScheduledAtPicker';
 import type { CartItemDto, OrderDto, PlaceOrderRequest, DeliveryType, PaymentMethod } from '@types-app/index';
 
-const PAYMENT_OPTIONS: { value: PaymentMethod; label: string; icon: string; note: string }[] = [
+const PAYMENT_OPTIONS: { value: PaymentMethod; label: string; icon: string; note: string; disabled?: boolean }[] = [
   { value: 'BANK_TRANSFER', label: 'Transferencia bancaria', icon: '🏦', note: 'Bancolombia' },
-  { value: 'MERCADOPAGO', label: 'Mercado Pago', icon: '💚', note: 'Tarjeta, PSE y más' },
+  { value: 'MERCADOPAGO', label: 'Mercado Pago', icon: '💚', note: 'Próximamente', disabled: true },
 ];
 
 interface DiscountPreview {
@@ -232,13 +232,16 @@ export function CheckoutForm({ cartItems, deliveryRate, discountPreview }: Check
         <section className="bg-card border border-border rounded-2xl p-6 space-y-4">
           <h2 className="text-lg font-semibold">Método de pago</h2>
           <div className="grid grid-cols-2 gap-3">
-            {PAYMENT_OPTIONS.map(({ value, icon, label, note }) => (
+            {PAYMENT_OPTIONS.map(({ value, icon, label, note, disabled }) => (
               <button
                 key={value}
                 type="button"
-                onClick={() => setPaymentMethod(value)}
-                className={`flex flex-col items-center gap-1 p-4 border-2 rounded-xl transition-colors ${
-                  paymentMethod === value
+                onClick={() => !disabled && setPaymentMethod(value)}
+                disabled={disabled}
+                className={`relative flex flex-col items-center gap-1 p-4 border-2 rounded-xl transition-colors ${
+                  disabled
+                    ? 'border-border opacity-40 cursor-not-allowed'
+                    : paymentMethod === value
                     ? 'border-primary bg-primary/5'
                     : 'border-border hover:border-primary/40'
                 }`}
@@ -340,11 +343,7 @@ export function CheckoutForm({ cartItems, deliveryRate, discountPreview }: Check
             disabled={submitting || cartItems.length === 0}
             className="w-full py-3 bg-primary text-white rounded-xl font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {submitting
-              ? 'Procesando...'
-              : paymentMethod === 'MERCADOPAGO'
-              ? 'Pagar con Mercado Pago'
-              : 'Confirmar pedido'}
+            {submitting ? 'Procesando...' : 'Confirmar pedido'}
           </button>
 
           <p className="text-xs text-center text-muted-foreground">
