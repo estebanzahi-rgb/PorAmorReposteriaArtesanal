@@ -15,8 +15,8 @@ export class ResendEmailAdapter implements EmailPort {
 
   async send(notification: EmailNotification): Promise<void> {
     if (!this.apiKey) {
-      this.logger.log(
-        `[DEV EMAIL] To: ${notification.to} | Subject: ${notification.subject}`,
+      this.logger.warn(
+        `[EMAIL SKIPPED — RESEND_API_KEY not set] To: ${notification.to} | Subject: ${notification.subject}`,
       );
       return;
     }
@@ -37,7 +37,13 @@ export class ResendEmailAdapter implements EmailPort {
 
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
-      this.logger.error(`Resend API error: ${JSON.stringify(body)}`);
+      this.logger.error(
+        `[EMAIL FAILED] To: ${notification.to} | Subject: ${notification.subject} | Resend error: ${JSON.stringify(body)}`,
+      );
+    } else {
+      this.logger.log(
+        `[EMAIL SENT] To: ${notification.to} | Subject: ${notification.subject}`,
+      );
     }
   }
 }
