@@ -101,6 +101,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
                 productId={product.id}
                 productName={product.name}
                 productImage={mainImage}
+                basePrice={discountedPrice ?? product.basePrice}
                 options={cakeOptions}
               />
             ) : (

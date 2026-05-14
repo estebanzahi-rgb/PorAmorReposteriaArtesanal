@@ -23,6 +23,7 @@ interface CakeConfiguratorProps {
   productId: string;
   productName: string;
   productImage?: string;
+  basePrice: number;
   options: CakeConfiguratorOptionsDto;
   onAddToCart?: () => void;
 }
@@ -31,6 +32,7 @@ export function CakeConfigurator({
   productId,
   productName,
   productImage,
+  basePrice,
   options,
   onAddToCart,
 }: CakeConfiguratorProps) {
@@ -50,8 +52,8 @@ export function CakeConfigurator({
     const filling = selected.FILLING?.priceModifier ?? 0;
     const topping = selected.TOPPING?.priceModifier ?? 0;
     const topper = selected.TOPPER?.priceModifier ?? 0;
-    return size + flavor + filling + topping + topper;
-  }, [selected]);
+    return basePrice + size + flavor + filling + topping + topper;
+  }, [basePrice, selected]);
 
   const isComplete = selected.SIZE && selected.FLAVOR && selected.FILLING;
 
