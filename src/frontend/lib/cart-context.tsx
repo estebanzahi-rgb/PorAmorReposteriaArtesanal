@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { getAnonymousCart, clearAnonymousCart } from '@lib/cart-storage';
 import { apiFetch } from '@lib/api';
@@ -8,14 +8,17 @@ import type { CartDto } from '@types-app/index';
 
 interface CartContextValue {
   count: number;
+  isMerging: boolean;
   refresh: () => void;
 }
 
-const CartContext = createContext<CartContextValue>({ count: 0, refresh: () => {} });
+const CartContext = createContext<CartContextValue>({ count: 0, isMerging: false, refresh: () => {} });
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const { data: session } = useSession();
   const [count, setCount] = useState(0);
+  const [isMerging, setIsMerging] = useState(false);
+  const mergingRef = useRef(false);
 
   const refresh = useCallback(() => {
     if (session?.backendToken) {
@@ -35,7 +38,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
 
     const anonItems = getAnonymousCart();
-    if (anonItems.length > 0) {
+    if (anonItems.length > 0 && !mergingRef.current) {
+      mergingRef.current = true;
+      setIsMerging(true);
       apiFetch<CartDto>('/cart/merge', {
         method: 'POST',
         token: session.backendToken,
@@ -45,13 +50,17 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           clearAnonymousCart();
           refresh();
         })
-        .catch(() => refresh());
+        .catch(() => refresh())
+        .finally(() => {
+          mergingRef.current = false;
+          setIsMerging(false);
+        });
     } else {
       refresh();
     }
   }, [refresh]);
 
-  return <CartContext.Provider value={{ count, refresh }}>{children}</CartContext.Provider>;
+  return <CartContext.Provider value={{ count, isMerging, refresh }}>{children}</CartContext.Provider>;
 }
 
 export function useCart() {

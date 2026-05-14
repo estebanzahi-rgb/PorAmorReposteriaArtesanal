@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { CheckoutForm } from '@components/checkout/checkout-form';
 import { apiFetch } from '@lib/api';
 import { getAnonymousCart } from '@lib/cart-storage';
+import { useCart } from '@lib/cart-context';
 import { useGA4 } from '../../../hooks/useGA4';
 import type { CartDto, CartItemDto, DeliveryRateDto } from '@types-app/index';
 
@@ -18,6 +19,7 @@ interface DiscountPreview {
 
 export default function CheckoutPage() {
   const { data: session, status } = useSession();
+  const { isMerging } = useCart();
   const [cartItems, setCartItems] = useState<CartItemDto[]>([]);
   const [deliveryRate, setDeliveryRate] = useState(0);
   const [discountPreview, setDiscountPreview] = useState<DiscountPreview | null>(null);
@@ -65,10 +67,10 @@ export default function CheckoutPage() {
       }
     }
 
-    if (status !== 'loading') load();
-  }, [session, status]);
+    if (status !== 'loading' && !isMerging) load();
+  }, [session, status, isMerging]);
 
-  if (status === 'loading' || loading) {
+  if (status === 'loading' || loading || isMerging) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
